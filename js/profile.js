@@ -1,12 +1,12 @@
 // js/profile.js
 // ============================================================
-// ПРОФИЛЬ — ПОЛНАЯ ВЕРСИЯ С НОМЕРОМ ИГРОКА И ВЫХОДОМ
+// ПРОФИЛЬ — ПОЛНАЯ ВЕРСИЯ С КНОПКОЙ ВЫХОДА
 // ============================================================
 
 import { user, saveUserData, getUsername, getCurrentLevel } from './user.js';
-import { showToast } from './ui.js';
+import { showToast, showConfetti } from './ui.js';
 import { TASKS_DB } from './tasks.js';
-import { getProfile, getTotalPlayersCount, isAuthenticated } from './supabase-client.js';
+import { getProfile, getTotalPlayersCount, isAuthenticated, signOut } from './supabase-client.js';
 
 // ============================================================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -205,13 +205,13 @@ export async function renderProfileModal() {
                 </div>
             </div>
             
-            <!-- ВЫХОД ИЗ АККАУНТА (только для авторизованных) -->
+            <!-- ВЫХОД ИЗ АККАУНТА -->
             ${isCloudAuth ? `
             <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <button id="logoutProfileBtn" class="w-full bg-red-100 hover:bg-red-200 text-red-600 py-2 rounded-full text-sm transition flex items-center justify-center gap-2">
+                <button id="logoutProfileBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-full text-sm transition flex items-center justify-center gap-2">
                     🚪 Выйти из аккаунта
                 </button>
-                <p class="text-xs text-gray-400 text-center mt-2">Ваш прогресс сохранён в облаке</p>
+                <p class="text-xs text-gray-400 text-center mt-2">Вы выйдете из аккаунта, данные сохранятся в облаке</p>
             </div>
             ` : ''}
         </div>
@@ -255,11 +255,34 @@ export async function renderProfileModal() {
     document.getElementById('importProfileBtn')?.addEventListener('click', importProgress);
     
     // Сброс прогресса
-    document.getElementById('resetProfileBtn')?.addEventListener('click', () => {
-        if (confirm('⚠️ Сбросить весь прогресс? Это нельзя отменить!')) {
-            localStorage.removeItem('russia1000_user');
-            showToast('Прогресс сброшен. Страница будет перезагружена', 'warning');
-            setTimeout(() => location.reload(), 1500);
+    document.getElementById('resetProfileBtn')?.addEventListener('click', async () => {
+        if (confirm('⚠️ Сбросить весь прогресс? Это нельзя отменить!\n\nПосле сброса вы будете перенаправлены на окно входа.')) {
+            try {
+                const { saveProgress, isAuthenticated, signOut } = await import('./supabase-client.js');
+                const isAuth = await isAuthenticated();
+                
+                if (isAuth) {
+                    await saveProgress({
+                        activeTasks: [],
+                        completedTasks: [],
+                        purchasedTasks: [],
+                        achievements: [],
+                        categoryProgress: {},
+                        pet: {},
+                        settings: {}
+                    });
+                    await signOut();
+                }
+                
+                localStorage.removeItem('russia1000_user');
+                localStorage.removeItem('guestMode');
+                
+                showToast('✅ Прогресс сброшен. Страница будет перезагружена', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } catch (error) {
+                console.error('Reset error:', error);
+                showToast('❌ Ошибка при сбросе прогресса', 'error');
+            }
         }
     });
     
@@ -280,12 +303,31 @@ export async function renderProfileModal() {
         }
     });
     
+    // ============================================================
     // ВЫХОД ИЗ АККАУНТА
+    // ============================================================
     document.getElementById('logoutProfileBtn')?.addEventListener('click', async () => {
-        if (confirm('Вы уверены, что хотите выйти из аккаунта?')) {
+        if (confirm('Вы уверены, что хотите выйти из аккаунта?\n\nВаш прогресс сохранён в облаке и будет доступен после повторного входа.')) {
             try {
-                const { handleLogout } = await import('./authSystem.js');
-                await handleLogout();
+                // Сохраняем прогресс перед выходом
+                const { saveUserToCloud } = await import('./supabase-client.js');
+                await saveUserToCloud(user);
+                
+                // Выходим из Supabase
+                await signOut();
+                
+                // Очищаем локальные данные
+                localStorage.removeItem('guestMode');
+                localStorage.removeItem('russia1000_user');
+                
+                // Закрываем модальное окно профиля
+                const modal = document.getElementById('profileModal');
+                if (modal) modal.classList.add('hidden');
+                
+                showToast('👋 Вы вышли из аккаунта. Страница будет перезагружена', 'info');
+                
+                // Перезагружаем страницу
+                setTimeout(() => location.reload(), 1500);
             } catch (error) {
                 console.error('Logout error:', error);
                 showToast('❌ Ошибка выхода из аккаунта', 'error');

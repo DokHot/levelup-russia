@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Авторизация...</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .success { color: #d1fae5; }
+        .error { color: #fee2e2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Авторизация...</h2>
+        <p id="status">Пожалуйста, подождите</p>
+    </div>
+
+    <script>
+        // Получаем токен из URL после редиректа
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        
+        if (accessToken) {
+            // Сохраняем токен
+            localStorage.setItem('yandex_access_token', accessToken);
+            localStorage.setItem('yandex_token_expires', Date.now() + 3600 * 1000);
+            
+            document.getElementById('status').innerHTML = '<span class="success">✅ Авторизация успешна!</span><br>Закройте это окно';
+            
+            // Сообщаем основному окну об успехе
+            if (window.opener) {
+                window.opener.postMessage({ type: 'yandex_auth_success', token: accessToken }, '*');
+            }
+            
+            // Закрываем окно через 2 секунды
+            setTimeout(() => window.close(), 2000);
+        } else {
+            const error = params.get('error');
+            document.getElementById('status').innerHTML = `<span class="error">❌ Ошибка: ${error || 'Не удалось получить токен'}</span>`;
+        }
+    </script>
+</body>
+</html>

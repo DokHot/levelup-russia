@@ -1,0 +1,1497 @@
+/* css/style.css */
+/* ============================================================ */
+/* ВЕРСИЯ 7.4 — ПОЛНЫЙ ФАЙЛ СО СТИЛЯМИ */
+/* ============================================================ */
+
+/* ============================================================ */
+/* ПЕРЕМЕННЫЕ ДЛЯ ДИНАМИЧЕСКИХ ТЕМ */
+/* ============================================================ */
+
+:root {
+    --bg-body: linear-gradient(135deg, #f0f9f4 0%, #d4e6f1 100%);
+    --bg-card: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+    --bg-card-secondary: rgba(255, 255, 255, 0.7);
+    --color-primary: #10b981;
+    --color-primary-hover: #059669;
+    --color-text: #1f2937;
+    --color-text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+}
+
+/* ============================================================ */
+/* БАЗОВЫЕ СТИЛИ */
+/* ============================================================ */
+
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: var(--bg-body);
+    transition: background 0.3s ease;
+}
+
+body.light {
+    background: var(--bg-body);
+}
+
+body.dark {
+    --bg-body: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
+    --bg-card: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    --bg-card-secondary: rgba(30, 40, 50, 0.7);
+    --color-text: #f3f4f6;
+    --color-text-secondary: #9ca3af;
+    --border-color: #374151;
+    background: var(--bg-body);
+}
+
+body.dark .glass-card {
+    background: rgba(30, 40, 40, 0.92);
+    color: #e0e0e0;
+}
+
+/* Фоны для кастомизации (старые, для совместимости) */
+body.bg-forest {
+    background: linear-gradient(135deg, #1a5f2a 0%, #0d3b1a 100%);
+}
+
+body.bg-cosmic {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+}
+
+/* ============================================================ */
+/* КАРТОЧКИ И КОНТЕЙНЕРЫ */
+/* ============================================================ */
+
+.glass-card,
+#profileView .bg-white,
+#authModal .bg-white,
+#changeNameModal .bg-white,
+#settingsView .bg-white {
+    background: var(--bg-card) !important;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+}
+
+.task-card-container {
+    perspective: 1500px;
+    height: 100%;
+}
+
+.task-card-flipper {
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    transform-style: preserve-3d;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+}
+
+.task-card-flipper.flipped {
+    transform: rotateY(180deg);
+}
+
+.task-card-front,
+.task-card-back {
+    backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.task-card-front {
+    transform: rotateY(0deg);
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.task-card-back {
+    transform: rotateY(180deg);
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow-y: auto;
+}
+
+body.dark .task-card-front {
+    background: rgba(35, 45, 45, 0.98);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark .task-card-back {
+    background: rgba(45, 55, 55, 0.98);
+    color: #e0e0e0;
+}
+
+/* ============================================================ */
+/* КАТЕГОРИИ И ТЕГИ */
+/* ============================================================ */
+
+.category-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.difficulty-1 {
+    color: #10b981;
+}
+
+.difficulty-2 {
+    color: #3b82f6;
+}
+
+.difficulty-3 {
+    color: #f59e0b;
+}
+
+.difficulty-4 {
+    color: #8b5cf6;
+}
+
+.difficulty-5 {
+    color: #ef4444;
+}
+
+.fade-in {
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================ */
+/* МОНЕТЫ И БОНУСЫ */
+/* ============================================================ */
+
+.coin {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #78350f;
+}
+
+/* ============================================================ */
+/* УВЕДОМЛЕНИЯ И АНИМАЦИИ */
+/* ============================================================ */
+
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: white;
+    z-index: 1000;
+    animation: slideUp 0.3s ease-out forwards;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: #fbbf24;
+    z-index: 1000;
+    animation: confetti 2s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes confetti {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* ============================================================ */
+/* ПРОГРЕСС-БАР УРОВНЯ */
+/* ============================================================ */
+
+.level-progress {
+    height: 8px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.level-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #3b82f6);
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* ============================================================ */
+/* ВКЛАДКИ */
+/* ============================================================ */
+
+.tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    background: #e5e7eb;
+}
+
+.tab-btn.active {
+    background: var(--color-primary) !important;
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.tab-btn.active:hover {
+    background: var(--color-primary-hover) !important;
+}
+
+/* Табы внутри магазина */
+.shop-tabs {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.shop-tab {
+    background: transparent;
+    color: #6b7280;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.shop-tab:hover {
+    color: #10b981;
+}
+
+.shop-tab.active {
+    color: #10b981;
+    border-bottom: 2px solid #10b981;
+}
+
+body.dark .shop-tab {
+    color: #9ca3af;
+}
+
+body.dark .shop-tab.active {
+    color: #10b981;
+}
+
+/* ============================================================ */
+/* ФИЛЬТРЫ МАГАЗИНА */
+/* ============================================================ */
+
+.shop-filter-group {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.shop-filter-group h4 {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #374151;
+}
+
+body.dark .shop-filter-group h4 {
+    color: #e5e7eb;
+}
+
+.user-card-header {
+    background: linear-gradient(135deg, #e8f5e9, #e3f2fd);
+}
+
+body.dark .user-card-header {
+    background: linear-gradient(135deg, #1e2a2a, #1a2a3a);
+}
+
+/* ============================================================ */
+/* КАТЕГОРИИ (ГРУППЫ) */
+/* ============================================================ */
+
+.category-group {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.category-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.8);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.category-group-content {
+    display: none;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.category-group-content.open {
+    display: block;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    margin: 4px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.category-item:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.category-item.active {
+    background: #10b981;
+    color: white;
+}
+
+.category-count {
+    background: #e5e7eb;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+body.dark .category-group {
+    background: rgba(30, 40, 40, 0.6);
+    border-color: #374151;
+}
+
+body.dark .category-group-header {
+    background: rgba(30, 40, 40, 0.8);
+    color: #e0e0e0;
+}
+
+body.dark .category-group-content {
+    background: rgba(30, 40, 40, 0.4);
+}
+
+body.dark .category-item:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+body.dark .category-count {
+    background: #374151;
+    color: #e0e0e0;
+}
+
+.rotate-90 {
+    transform: rotate(90deg);
+}
+
+/* ============================================================ */
+/* ФОТОГРАФИИ */
+/* ============================================================ */
+
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.photo-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.photo-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+/* ============================================================ */
+/* СРОЧНОЕ ДЕЛО */
+/* ============================================================ */
+
+.urgent-banner {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.9;
+        transform: scale(1.01);
+    }
+}
+
+.close-card-btn {
+    transition: all 0.2s;
+}
+
+.close-card-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    transform: scale(1.1);
+}
+
+/* ============================================================ */
+/* РУЛЕТКА */
+/* ============================================================ */
+
+.roulette-container {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+}
+
+.roulette-spin-btn {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    transition: transform 0.2s;
+}
+
+.roulette-spin-btn:hover {
+    transform: scale(1.05);
+}
+
+.quest-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+}
+
+/* ============================================================ */
+/* КАЛЕНДАРЬ ДОСТИЖЕНИЙ */
+/* ============================================================ */
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-day.claimed {
+    background: #10b981;
+    color: white;
+}
+
+.calendar-day.today {
+    border: 2px solid #f59e0b;
+}
+
+.calendar-day.future {
+    opacity: 0.5;
+}
+
+.calendar-day.past-unclaimed {
+    background: #e5e7eb;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+body.dark .calendar-day {
+    background: rgba(30, 40, 40, 0.9);
+    color: #e0e0e0;
+}
+
+body.dark .calendar-day.past-unclaimed {
+    background: #2a3a3a;
+}
+
+/* ============================================================ */
+/* АВАТАРКИ */
+/* ============================================================ */
+
+.avatar-item {
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.avatar-item:hover {
+    transform: scale(1.05);
+}
+
+.avatar-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0 auto;
+}
+
+.frame-preview {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    margin: 0 auto;
+}
+
+.frame-bronze {
+    box-shadow: 0 0 0 4px #cd7f32;
+}
+
+.frame-silver {
+    box-shadow: 0 0 0 4px #c0c0c0;
+}
+
+.frame-gold {
+    box-shadow: 0 0 0 4px #ffd700;
+}
+
+.frame-diamond {
+    box-shadow: 0 0 0 4px #b9f2ff, 0 0 0 8px #e0ffff;
+}
+
+.frame-legendary {
+    box-shadow: 0 0 0 4px #ff4500, 0 0 0 8px #ffa500;
+}
+
+/* Анимированные аватарки */
+.avatar-sleeping-cat {
+    animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.avatar-running-dog {
+    animation: run 0.5s steps(4) infinite;
+}
+
+@keyframes run {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(5px);
+    }
+}
+
+.avatar-flying-eagle {
+    animation: fly 1s ease-in-out infinite;
+}
+
+@keyframes fly {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.avatar-spinning-penguin {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.avatar-floating-fairy {
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.avatar-glowing-dragon {
+    animation: glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 2px #ff4500);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 10px #ff4500);
+    }
+}
+
+.avatar-walking-robot {
+    animation: walk 0.8s steps(4) infinite;
+}
+
+@keyframes walk {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(8px);
+    }
+}
+
+.avatar-swimming-mermaid {
+    animation: swim 1.2s ease-in-out infinite;
+}
+
+@keyframes swim {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-3px) rotate(5deg);
+    }
+}
+
+/* ============================================================ */
+/* БУСТЕРЫ */
+/* ============================================================ */
+
+.booster-active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.timer-text {
+    font-family: monospace;
+    font-size: 12px;
+}
+
+/* ============================================================ */
+/* КАРТА */
+/* ============================================================ */
+
+#globalMap {
+    height: 400px;
+    width: 100%;
+    border-radius: 16px;
+}
+
+/* ============================================================ */
+/* ФОТО (ЗАГРУЗКА) */
+/* ============================================================ */
+
+.photo-upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.photo-upload-area:hover {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+/* ============================================================ */
+/* ИСТОРИЯ (цветовая индикация) */
+/* ============================================================ */
+
+.history-card {
+    background: #f9fafb;
+    transition: background 0.2s;
+    border-left: 4px solid #d1d5db;
+}
+
+body.dark .history-card {
+    background: #374151;
+}
+
+.history-card:hover {
+    background: #f3f4f6;
+}
+
+body.dark .history-card:hover {
+    background: #4b5563;
+}
+
+.history-card.completed-on-time {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.history-card.completed-late {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.history-card.surrendered {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+}
+
+body.dark .history-card.completed-on-time {
+    background: #064e3b;
+    border-left-color: #10b981;
+}
+
+body.dark .history-card.completed-late {
+    background: #78350f;
+    border-left-color: #f59e0b;
+}
+
+body.dark .history-card.surrendered {
+    background: #7f1d1d;
+    border-left-color: #ef4444;
+}
+
+/* ============================================================ */
+/* СВЕТЛЫЕ ПОЛЯ КАРТОЧЕК */
+/* ============================================================ */
+
+.task-card-back .bg-gray-50 {
+    background-color: #f9fafb;
+}
+
+body.dark .task-card-back .bg-gray-50 {
+    background-color: #1f2937;
+}
+
+/* ============================================================ */
+/* СВЕТЛЫЙ ВЫБОР СРОКОВ */
+/* ============================================================ */
+
+.deadline-option {
+    background: white;
+    border-color: #e5e7eb;
+}
+
+body.dark .deadline-option {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.deadline-option:hover {
+    background: #f9fafb;
+}
+
+body.dark .deadline-option:hover {
+    background: #374151;
+}
+
+/* ============================================================ */
+/* ПИТОМЦЫ — КАРТОЧКА И КНОПКИ */
+/* ============================================================ */
+
+.pet-stat-bar {
+    transition: width 0.3s ease;
+}
+
+.pet-tab-btn {
+    transition: all 0.2s;
+}
+
+.pet-tab-btn.active {
+    background: var(--color-primary) !important;
+    color: white;
+}
+
+.grayscale {
+    filter: grayscale(100%);
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+.feed-btn, .play-btn, .clean-btn, .heal-btn {
+    transition: transform 0.1s;
+}
+
+.feed-btn:active, .play-btn:active, .clean-btn:active, .heal-btn:active {
+    transform: scale(0.95);
+}
+
+/* Карточка питомца */
+.pet-card {
+    background: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .pet-card {
+    background: #1f2937;
+}
+
+/* Кнопка быстрого пополнения */
+.quick-buy-btn {
+    background: #fbbf24;
+    color: #78350f;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.quick-buy-btn:hover {
+    background: #f59e0b;
+    transform: scale(1.05);
+}
+
+/* ============================================================ */
+/* КОМНАТЫ — СВЕТЛЫЕ КАРТОЧКИ */
+/* ============================================================ */
+
+.room-card {
+    background-color: #f9fafb !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+}
+
+.room-card:hover {
+    background-color: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+}
+
+body.dark .room-card {
+    background-color: #374151 !important;
+    border: 1px solid #4b5563 !important;
+}
+
+body.dark .room-card:hover {
+    background-color: #4b5563 !important;
+    border-color: #6b7280 !important;
+}
+
+.room-card .room-icon {
+    font-size: 2rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.room-card .room-name {
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    color: #1f2937 !important;
+}
+
+body.dark .room-card .room-name {
+    color: #f3f4f6 !important;
+}
+
+.room-card .room-desc {
+    font-size: 0.65rem !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+}
+
+body.dark .room-card .room-desc {
+    color: #9ca3af !important;
+}
+
+.room-card .room-status {
+    font-size: 0.65rem !important;
+    margin-top: 0.25rem !important;
+}
+
+.room-card .room-status.text-green-600 {
+    color: #10b981 !important;
+}
+
+.room-card button {
+    font-size: 0.65rem !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 9999px !important;
+    margin-top: 0.25rem !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+}
+
+.room-card button:hover {
+    transform: scale(1.02) !important;
+}
+
+.room-card .change-room-btn {
+    background-color: #2563eb !important;
+    color: white !important;
+}
+
+.room-card .change-room-btn:hover {
+    background-color: #1d4ed8 !important;
+}
+
+.room-card .buy-room-btn {
+    background-color: #16a34a !important;
+    color: white !important;
+}
+
+.room-card .buy-room-btn:hover {
+    background-color: #15803d !important;
+}
+
+/* ============================================================ */
+/* НЕЖНО-СИНИЙ ФОН ДЛЯ РЕГИСТРАЦИИ И ПРОФИЛЯ */
+/* ============================================================ */
+
+#authModal .bg-white,
+#changeNameModal .bg-white {
+    background: linear-gradient(135deg, #e8f4f8 0%, #d4eaf0 100%) !important;
+    border-radius: 1.5rem !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.dark #authModal .bg-white,
+body.dark #changeNameModal .bg-white {
+    background: linear-gradient(135deg, #1a2a3a 0%, #1e3a4a 100%) !important;
+}
+
+#profileView .bg-white {
+    background: linear-gradient(135deg, #e8f4f8 0%, #dcecf2 100%) !important;
+    border: none !important;
+    border-radius: 1rem !important;
+}
+
+body.dark #profileView .bg-white {
+    background: linear-gradient(135deg, #1a2a3a 0%, #1e3440 100%) !important;
+}
+
+#profileView .bg-gray-50 {
+    background: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.dark #profileView .bg-gray-50 {
+    background: rgba(30, 40, 50, 0.7) !important;
+}
+
+#profileView .bg-blue-600 {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+}
+
+#profileView .bg-green-600 {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+#authModal input,
+#changeNameModal input {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #b0d4e8 !important;
+    border-radius: 0.75rem !important;
+}
+
+body.dark #authModal input,
+body.dark #changeNameModal input {
+    background: rgba(30, 40, 50, 0.9) !important;
+    border: 1px solid #2a4a5a !important;
+}
+
+/* ============================================================ */
+/* ПРОФИЛЬ — УЛУЧШЕНИЯ */
+/* ============================================================ */
+
+#profileView .text-6xl {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border-radius: 50%;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#profileView .grid .bg-gray-50 {
+    transition: transform 0.2s ease;
+}
+
+#profileView .grid .bg-gray-50:hover {
+    transform: translateY(-2px);
+}
+
+#editProfileBtn {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+#editProfileBtn:hover {
+    transform: scale(1.1);
+}
+
+/* ============================================================ */
+/* НАСТРОЙКИ — ТЕМЫ И ЦВЕТА */
+/* ============================================================ */
+
+#settingsView .bg-white {
+    background: var(--bg-card) !important;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.theme-btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.theme-btn:hover {
+    transform: translateY(-2px);
+}
+
+.custom-color-btn {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.custom-color-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+#resetSettingsBtn {
+    transition: all 0.2s ease;
+}
+
+#resetSettingsBtn:hover {
+    transform: scale(1.02);
+}
+
+/* ============================================================ */
+/* АНИМАЦИЯ УВЕЛИЧЕНИЯ КАРТОЧКИ В МАГАЗИНЕ */
+/* ============================================================ */
+
+.task-card-container {
+    transition: transform 0.2s ease;
+}
+
+.task-card-container:hover {
+    transform: scale(1.02);
+}
+
+.task-card-container.flipped {
+    transform: scale(1);
+}
+
+/* ============================================================ */
+/* ГЛОБАЛЬНЫЕ СТИЛИ ДЛЯ СВЕТЛОЙ ТЕМЫ (автоматические) */
+/* ============================================================ */
+
+/* Базовые цвета для светлой темы */
+body.light {
+    --bg-card-white: #ffffff;
+    --bg-card-light: #f9fafb;
+    --bg-card-hover: #f3f4f6;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border-light: #e5e7eb;
+}
+
+/* Автоматическое применение ко всем карточкам */
+body.light .bg-white,
+body.light [class*="bg-white"] {
+    background-color: var(--bg-card-white) !important;
+}
+
+body.light .bg-gray-50,
+body.light .bg-gray-100,
+body.light [class*="bg-gray-50"],
+body.light [class*="bg-gray-100"] {
+    background-color: var(--bg-card-light) !important;
+}
+
+/* Автоматическое применение к тексту */
+body.light .text-gray-900,
+body.light .text-gray-800,
+body.light .text-gray-700,
+body.light .text-gray-600,
+body.light [class*="text-gray-"]:not(.text-gray-400):not(.text-gray-500) {
+    color: var(--text-primary) !important;
+}
+
+body.light .text-gray-500,
+body.light .text-gray-400 {
+    color: var(--text-secondary) !important;
+}
+
+/* Автоматическое применение к границам */
+body.light .border,
+body.light .border-gray-200,
+body.light .border-gray-300,
+body.light [class*="border-gray-"] {
+    border-color: var(--border-light) !important;
+}
+
+/* Все модальные окна — автоматический светлый фон */
+body.light .fixed.inset-0.bg-black\/70 > div,
+body.light [id$="Modal"] > div:first-child {
+    background-color: var(--bg-card-white) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Все вкладки (неактивные) */
+body.light .tab-btn:not(.active) {
+    background-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+/* Все карточки в магазине */
+body.light .task-card-front,
+body.light .task-card-back {
+    background-color: var(--bg-card-white) !important;
+    border: 1px solid var(--border-light) !important;
+}
+
+/* Инпуты и текстовые поля */
+body.light input,
+body.light textarea,
+body.light select {
+    background-color: var(--bg-card-white) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-primary) !important;
+}
+
+body.light input:focus,
+body.light textarea:focus,
+body.light select:focus {
+    outline: none !important;
+    border-color: var(--color-primary, #10b981) !important;
+    ring: 2px solid var(--color-primary, #10b981) !important;
+}
+
+/* Кнопки закрытия модальных окон */
+body.light button[id*="close"]:not(.tab-btn):not(.shop-tab) {
+    background: transparent !important;
+    color: #9ca3af !important;
+}
+
+body.light button[id*="close"]:hover {
+    color: #4b5563 !important;
+}
+
+/* Списки и контейнеры */
+body.light .space-y-2 > *,
+body.light .space-y-3 > *,
+body.light .space-y-4 > * {
+    border-color: var(--border-light) !important;
+}
+
+/* Горизонтальные разделители */
+body.light hr {
+    border-color: var(--border-light) !important;
+}
+
+/* Тени для карточек */
+body.light .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Адаптация для тёмной темы (автоматически) */
+body.dark .fixed.inset-0.bg-black\/70 > div,
+body.dark [id$="Modal"] > div:first-child {
+    background-color: #1f2937 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark input,
+body.dark textarea,
+body.dark select {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+}
+
+body.dark .tab-btn:not(.active) {
+    background-color: #374151 !important;
+    color: #9ca3af !important;
+}
+/* ============================================================ */
+/* ВЫПАДАЮЩЕЕ МЕНЮ ДЛЯ ВКЛАДОК (Схема 4) */
+/* ============================================================ */
+
+.dropdown-tab-btn {
+    transition: all 0.2s ease;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.dropdown-tab-btn:hover {
+    background-color: #f3f4f6;
+}
+
+body.dark .dropdown-tab-btn:hover {
+    background-color: #374151;
+}
+
+/* Анимация появления */
+#moreTabsDropdown {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform-origin: top right;
+}
+
+#moreTabsDropdown:not(.hidden) {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Пустой экран приветствия */
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-screen .welcome-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.welcome-screen h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.welcome-screen p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.welcome-screen .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.welcome-screen .suggestion-btn {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.welcome-screen .suggestion-btn:hover {
+    background: var(--color-primary-hover);
+    transform: scale(1.02);
+}
+/* ============================================================ */
+/* ПРИВЕТСТВЕННЫЙ ЭКРАН */
+/* ============================================================ */
+
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+}
+
+.welcome-screen .welcome-icon {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+}
+
+.welcome-screen h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.welcome-screen p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.welcome-screen .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.welcome-screen .suggestion-btn {
+    background: var(--color-primary);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 9999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.welcome-screen .suggestion-btn:hover {
+    background: var(--color-primary-hover);
+    transform: scale(1.02);
+}
+/* Сетка магазина — 3 колонки */
+#shopGrid {
+    display: block !important;
+}
+
+#shopGrid .grid {
+    display: grid !important;
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+@media (min-width: 768px) {
+    #shopGrid .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    #shopGrid .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Карточки должны иметь одинаковую высоту */
+.task-card-container {
+    height: 100%;
+}
+
+.task-card-flipper {
+    height: 100%;
+    min-height: 320px;
+}
+
+.task-card-front, .task-card-back {
+    height: 100%;
+}

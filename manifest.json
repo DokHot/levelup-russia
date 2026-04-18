@@ -1,0 +1,8 @@
+{
+  "name": "1000 возможностей России",
+  "short_name": "1000 России",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#10b981",
+  "background_color": "#f0f9f4"
+}

@@ -1,18 +1,17 @@
 // js/profile.js
 // ============================================================
-// ПРОФИЛЬ — ВКЛАДКА С ДАННЫМИ ПОЛЬЗОВАТЕЛЯ (версия 7.1.2)
+// ПРОФИЛЬ — ВКЛАДКА С ДАННЫМИ ПОЛЬЗОВАТЕЛЯ (версия 7.5)
 // ============================================================
 
-import { user, getUsername, saveUserData, generateUserId } from './user.js';
-import { getCurrentLevel } from './user.js';
+import { user, getUsername, saveUserData, generateUserId, getCurrentLevel } from './user.js';
 import { showToast } from './ui.js';
-import { showChangeUsernameModal } from './auth.js';
 import { TASKS_DB } from './tasks.js';
+import { isAuthenticated } from './supabase-client.js';
 
 /**
  * Рендер вкладки профиля
  */
-export function renderProfile() {
+export async function renderProfile() {
     const container = document.getElementById('profileView');
     if (!container) return;
     
@@ -41,6 +40,9 @@ export function renderProfile() {
     
     const roomsOwned = user.pet?.purchasedRooms?.length || 0;
     
+    // Проверяем, авторизован ли пользователь в Supabase
+    const isCloudAuth = await isAuthenticated();
+    
     let html = `
         <div class="max-w-2xl mx-auto">
             <!-- Карточка профиля -->
@@ -51,6 +53,7 @@ export function renderProfile() {
                         <h2 class="text-2xl font-bold">${escapeHtml(username)}</h2>
                         <p class="text-sm text-gray-500">ID: ${userId.substring(0, 16)}...</p>
                         ${isGuest ? '<span class="inline-block mt-1 text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">👤 Гость</span>' : ''}
+                        ${isCloudAuth ? '<span class="inline-block mt-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 px-2 py-0.5 rounded-full ml-2">☁️ Синхронизация включена</span>' : ''}
                     </div>
                     <button id="editProfileBtn" class="text-gray-400 hover:text-gray-600 transition text-xl">✏️</button>
                 </div>
@@ -109,7 +112,7 @@ export function renderProfile() {
             </div>
             
             <!-- Экспорт/Импорт -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg mb-6">
                 <h3 class="text-lg font-bold mb-4">💾 Данные</h3>
                 <div class="flex flex-wrap gap-3">
                     <button id="exportDataBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full transition">📤 Экспорт прогресса</button>
@@ -119,6 +122,19 @@ export function renderProfile() {
                     💡 Экспорт создаст файл с вашим прогрессом. Импорт восстановит данные из файла.
                 </p>
             </div>
+            
+            <!-- Кнопка выхода из аккаунта (только для авторизованных) -->
+            ${isCloudAuth ? `
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+                <h3 class="text-lg font-bold mb-4">🔐 Аккаунт</h3>
+                <button id="profileLogoutBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition flex items-center justify-center gap-2">
+                    <span>🚪</span> Выйти из аккаунта
+                </button>
+                <p class="text-xs text-gray-400 mt-3 text-center">
+                    ☁️ Ваш прогресс сохранён в облаке и будет доступен после повторного входа
+                </p>
+            </div>
+            ` : ''}
         </div>
     `;
     
@@ -126,19 +142,31 @@ export function renderProfile() {
     
     // Обработчики
     document.getElementById('editProfileBtn')?.addEventListener('click', async () => {
+        const { showChangeUsernameModal } = await import('./auth.js');
         await showChangeUsernameModal();
         renderProfile();
     });
     
     document.getElementById('exportDataBtn')?.addEventListener('click', exportProgress);
     document.getElementById('importDataBtn')?.addEventListener('click', importProgress);
+    
+    // Кнопка выхода из аккаунта
+    const logoutBtn = document.getElementById('profileLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            const { handleLogout } = await import('./auth-ui.js');
+            await handleLogout();
+        });
+    }
 }
 
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================================
+
 function getAvatarByUsername(username) {
-    // Простая генерация аватара по имени
-    const firstChar = username.charAt(0).toUpperCase();
     const emojis = ['😀', '😎', '🦊', '🐱', '🐶', '🦁', '🐼', '🐧', '🦄', '🌟', '⭐', '🔥'];
-    const index = username.length % emojis.length;
+    const index = username?.length % emojis.length || 0;
     return emojis[index];
 }
 
@@ -163,7 +191,7 @@ function declension(n, one, two, five) {
 
 function exportProgress() {
     const data = {
-        version: '7.1.2',
+        version: '7.5',
         exportDate: new Date().toISOString(),
         user: user
     };
@@ -192,14 +220,11 @@ function importProgress() {
             try {
                 const data = JSON.parse(ev.target.result);
                 if (data.user) {
-                    // Сохраняем текущий userId и имя, чтобы не потерять
                     const currentUserId = user.account?.userId;
                     const currentUsername = user.account?.username;
                     
-                    // Обновляем пользователя
                     Object.assign(user, data.user);
                     
-                    // Восстанавливаем account данные
                     if (!user.account) user.account = {};
                     user.account.userId = currentUserId;
                     user.account.username = currentUsername;
@@ -207,7 +232,6 @@ function importProgress() {
                     saveUserData();
                     showToast('✅ Прогресс восстановлен! Перезагрузите страницу', 'success');
                     
-                    // Обновляем интерфейс
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showToast('❌ Неверный формат файла', 'error');

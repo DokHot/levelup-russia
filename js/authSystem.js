@@ -294,19 +294,22 @@ export function setupAuthModals() {
     const doRegisterBtn = document.getElementById('doRegisterBtn')
     const doResetPasswordBtn = document.getElementById('doResetPasswordBtn')
     
+    // Кнопки переключения между модальными окнами
     const showRegisterFromLoginBtn = document.getElementById('showRegisterFromLoginBtn')
     const showLoginFromRegisterBtn = document.getElementById('showLoginFromRegisterBtn')
     const forgotPasswordBtn = document.getElementById('forgotPasswordBtn')
     const backToLoginBtn = document.getElementById('backToLoginBtn')
     
+    // Гостевой режим
     const guestLoginBtn = document.getElementById('guestLoginBtn')
     const guestRegisterBtn = document.getElementById('guestRegisterBtn')
     
+    // Кнопки закрытия
     const closeLoginModal = document.getElementById('closeLoginModal')
     const closeRegisterModal = document.getElementById('closeRegisterModal')
     const closeResetModal = document.getElementById('closeResetModal')
     
-    // Вход
+    // ========== ВХОД ==========
     if (doLoginBtn) {
         doLoginBtn.onclick = async () => {
             const email = document.getElementById('loginEmail')?.value
@@ -315,7 +318,7 @@ export function setupAuthModals() {
         }
     }
     
-    // Регистрация
+    // ========== РЕГИСТРАЦИЯ ==========
     if (doRegisterBtn) {
         doRegisterBtn.onclick = async () => {
             const username = document.getElementById('regUsername')?.value
@@ -326,7 +329,7 @@ export function setupAuthModals() {
         }
     }
     
-    // Восстановление пароля
+    // ========== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ==========
     if (doResetPasswordBtn) {
         doResetPasswordBtn.onclick = async () => {
             const email = document.getElementById('resetEmail')?.value
@@ -334,28 +337,64 @@ export function setupAuthModals() {
         }
     }
     
-    // Переключение между модальными окнами
-    if (showRegisterFromLoginBtn) showRegisterFromLoginBtn.onclick = showRegisterModal
-    if (showLoginFromRegisterBtn) showLoginFromRegisterBtn.onclick = () => {
-        hideAuthModals()
-        showAuthModal()
-    }
-    if (forgotPasswordBtn) forgotPasswordBtn.onclick = showResetPasswordModal
-    if (backToLoginBtn) backToLoginBtn.onclick = () => {
-        hideAuthModals()
-        showAuthModal()
+    // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ОКНАМИ ==========
+    if (showRegisterFromLoginBtn) {
+        showRegisterFromLoginBtn.onclick = () => {
+            console.log('🔄 Переход на регистрацию')
+            showRegisterModal()
+        }
     }
     
-    // Гостевой режим
-    if (guestLoginBtn) guestLoginBtn.onclick = handleGuestMode
-    if (guestRegisterBtn) guestRegisterBtn.onclick = handleGuestMode
+    if (showLoginFromRegisterBtn) {
+        showLoginFromRegisterBtn.onclick = () => {
+            console.log('🔄 Переход на вход')
+            hideAuthModals()
+            showAuthModal()
+        }
+    }
     
-    // Закрытие модальных окон
-    if (closeLoginModal) closeLoginModal.onclick = hideAuthModals
-    if (closeRegisterModal) closeRegisterModal.onclick = hideAuthModals
-    if (closeResetModal) closeResetModal.onclick = hideAuthModals
+    if (forgotPasswordBtn) {
+        forgotPasswordBtn.onclick = () => {
+            console.log('🔄 Переход на восстановление пароля')
+            showResetPasswordModal()
+        }
+    }
     
-    // Закрытие по клику на фон
+    if (backToLoginBtn) {
+        backToLoginBtn.onclick = () => {
+            console.log('🔄 Возврат ко входу')
+            hideAuthModals()
+            showAuthModal()
+        }
+    }
+    
+    // ========== ГОСТЕВОЙ РЕЖИМ ==========
+    if (guestLoginBtn) {
+        guestLoginBtn.onclick = () => {
+            console.log('👤 Гостевой режим (из входа)')
+            handleGuestMode()
+        }
+    }
+    
+    if (guestRegisterBtn) {
+        guestRegisterBtn.onclick = () => {
+            console.log('👤 Гостевой режим (из регистрации)')
+            handleGuestMode()
+        }
+    }
+    
+    // ========== ЗАКРЫТИЕ МОДАЛЬНЫХ ОКОН ==========
+    if (closeLoginModal) {
+        closeLoginModal.onclick = hideAuthModals
+    }
+    if (closeRegisterModal) {
+        closeRegisterModal.onclick = hideAuthModals
+    }
+    if (closeResetModal) {
+        closeResetModal.onclick = hideAuthModals
+    }
+    
+    // ========== ЗАКРЫТИЕ ПО КЛИКУ НА ФОН ==========
     const modals = ['loginModal', 'registerModal', 'resetPasswordModal']
     modals.forEach(id => {
         const modal = document.getElementById(id)
@@ -366,7 +405,7 @@ export function setupAuthModals() {
         }
     })
     
-    // Enter для отправки
+    // ========== ENTER ДЛЯ ОТПРАВКИ ==========
     const loginPassword = document.getElementById('loginPassword')
     const regPassword = document.getElementById('regPassword')
     
@@ -381,4 +420,6 @@ export function setupAuthModals() {
             if (e.key === 'Enter') doRegisterBtn?.click()
         })
     }
+    
+    console.log('✅ Auth модальные окна настроены')
 }

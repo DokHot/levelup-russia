@@ -40,7 +40,7 @@ import { renderAbout } from './about.js';
 import { initCloudPhotoStorage } from './cloud/cloudPhotoStorage.js';
 import { lazyLoad, preloadModule, prefetchResources } from './performance/lazyLoader.js';
 import { forceSync, getSyncStatus } from './backgroundSync.js';
-
+import { initAuth, setupAuthUI } from './auth-ui.js'
 // ============================================================
 // ПЕРЕМЕННЫЕ
 // ============================================================
@@ -1165,12 +1165,12 @@ function setupCustomEventHandlers() {
 async function init() {
     if (isInitialized) return;
     
-    console.log('🚀 Версия 7.5 — Оптимизация + Облачное хранилище фото');
+    console.log('🚀 Версия 7.5 — Оптимизация + Облачное хранилище фото + Supabase Auth');
     
     // Обновляем версию в DOM
     const versionSpan = document.querySelector('.inline-flex.items-center.gap-3 span');
     if (versionSpan) {
-        versionSpan.textContent = '1000 возможностей · Версия 7.5';
+        versionSpan.textContent = '1000 возможностей России · Версия 7.5';
     }
     
     // Загрузка задач
@@ -1228,6 +1228,21 @@ async function init() {
     updateLastLogin();
     await checkAndShowAuth();
     
+    // ============================================================
+    // НОВЫЙ КОД: ИНИЦИАЛИЗАЦИЯ АВТОРИЗАЦИИ SUPABASE
+    // ============================================================
+    
+    // Импортируем функции авторизации (динамически, чтобы избежать циклических зависимостей)
+    try {
+        const { initAuth, setupAuthUI } = await import('./auth-ui.js');
+        await initAuth();
+        setupAuthUI();
+        console.log('✅ Supabase Auth инициализирован');
+    } catch (error) {
+        console.warn('⚠️ Ошибка инициализации Supabase Auth:', error);
+        // Продолжаем работу без облачной синхронизации
+    }
+    
     // Предзагрузка ресурсов
     prefetchResources([
         'js/activeTasks.js',
@@ -1249,6 +1264,3 @@ async function init() {
     isInitialized = true;
     console.log('✅ Инициализация версии 7.5 завершена');
 }
-
-// Запуск
-init();

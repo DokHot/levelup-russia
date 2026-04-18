@@ -628,6 +628,88 @@
 
     <!-- ОСНОВНОЙ СКРИПТ ПРИЛОЖЕНИЯ -->
     <script type="module" src="js/main.js"></script>
+    <!-- ============================================================ -->
+    <!-- МОДАЛЬНЫЕ ОКНА ВХОДА И РЕГИСТРАЦИИ (SUPABASE)               -->
+    <!-- ============================================================ -->
+    
+    <!-- Модальное окно входа -->
+    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold">Вход в аккаунт</h2>
+                <p class="text-sm text-gray-500 mt-1">Войдите, чтобы синхронизировать прогресс</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" id="loginEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Пароль</label>
+                <input type="password" id="loginPassword" placeholder="••••••" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            </div>
+            
+            <button id="doLoginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Войти
+            </button>
+            
+            <div class="text-center mt-4">
+                <button id="showRegisterFromLoginBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Нет аккаунта? Зарегистрироваться
+                </button>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button id="closeLoginModal" class="text-sm text-gray-400 hover:text-gray-600">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
 
+    <!-- Модальное окно регистрации -->
+    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">📝</div>
+                <h2 class="text-2xl font-bold">Регистрация</h2>
+                <p class="text-sm text-gray-500 mt-1">Создайте аккаунт для сохранения прогресса</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Имя пользователя</label>
+                <input type="text" id="regUsername" placeholder="Как к вам обращаться?" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                <p class="text-xs text-gray-400 mt-1">От 3 до 20 символов</p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" id="regEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Пароль</label>
+                <input type="password" id="regPassword" placeholder="минимум 6 символов" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+            </div>
+            
+            <button id="doRegisterBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Зарегистрироваться
+            </button>
+            
+            <div class="text-center mt-4">
+                <button id="showLoginFromRegisterBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Уже есть аккаунт? Войти
+                </button>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button id="closeRegisterModal" class="text-sm text-gray-400 hover:text-gray-600">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

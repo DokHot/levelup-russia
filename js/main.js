@@ -1,6 +1,6 @@
 // js/main.js
 // ============================================================
-// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 7.5)
+// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 7.6)
 // ============================================================
 
 import { initTasks, TASKS_DB } from './tasks.js';
@@ -40,6 +40,7 @@ import { renderAbout } from './about.js';
 import { initCloudPhotoStorage } from './cloud/cloudPhotoStorage.js';
 import { lazyLoad, preloadModule, prefetchResources } from './performance/lazyLoader.js';
 import { forceSync, getSyncStatus } from './backgroundSync.js';
+import { initAuth, setupAuthModals } from './authSystem.js';
 
 // ============================================================
 // ПЕРЕМЕННЫЕ
@@ -285,6 +286,14 @@ async function renderTabContent(tabName) {
         case 'about':
             renderAbout();
             break;
+            
+        case 'settings':
+            const settingsView = document.getElementById('settingsView');
+            if (settingsView) {
+                const { renderSettings } = await import('./settings.js');
+                renderSettings();
+            }
+            break;
     }
 }
 
@@ -466,7 +475,7 @@ function exportData() {
         user: user,
         settings: { theme: currentTheme },
         exportDate: new Date().toISOString(),
-        version: '7.5'
+        version: '7.6'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
@@ -523,7 +532,7 @@ function openTaskDetail(id) {
 }
 
 // ============================================================
-// ФУНКЦИИ ДЛЯ МОДАЛЬНЫХ ОКОН ПРОФИЛЯ И НАСТРОЕК
+// ФУНКЦИИ ДЛЯ МОДАЛЬНЫХ ОКОН ПРОФИЛЯ И НАСТРОЕК (СТАРЫЕ)
 // ============================================================
 
 function renderProfileModal() {
@@ -654,26 +663,39 @@ function setupEventListeners() {
         };
     }
     
+    // ============================================================
+    // КНОПКА ПРОФИЛЯ
+    // ============================================================
     const headerProfileBtn = document.getElementById('headerProfileBtn');
+    if (headerProfileBtn) {
+        headerProfileBtn.onclick = async () => {
+            const { openProfileModal } = await import('./profile.js');
+            openProfileModal();
+        };
+    }
+    
+    // ============================================================
+    // КНОПКА НАСТРОЕК
+    // ============================================================
     const headerSettingsBtn = document.getElementById('headerSettingsBtn');
+    if (headerSettingsBtn) {
+        headerSettingsBtn.onclick = async () => {
+            const { openSettingsModal } = await import('./settings.js');
+            if (typeof openSettingsModal === 'function') {
+                openSettingsModal();
+            } else {
+                const { renderSettingsModal } = await import('./settings.js');
+                if (renderSettingsModal) renderSettingsModal();
+                const settingsModal = document.getElementById('settingsModal');
+                if (settingsModal) settingsModal.classList.remove('hidden');
+            }
+        };
+    }
+    
     const closeProfileModal = document.getElementById('closeProfileModal');
     const closeSettingsModal = document.getElementById('closeSettingsModal');
     const profileModal = document.getElementById('profileModal');
     const settingsModal = document.getElementById('settingsModal');
-    
-    if (headerProfileBtn) {
-        headerProfileBtn.onclick = () => {
-            renderProfileModal();
-            profileModal.classList.remove('hidden');
-        };
-    }
-    
-    if (headerSettingsBtn) {
-        headerSettingsBtn.onclick = () => {
-            renderSettingsModal();
-            settingsModal.classList.remove('hidden');
-        };
-    }
     
     if (closeProfileModal) closeProfileModal.onclick = () => profileModal.classList.add('hidden');
     if (closeSettingsModal) closeSettingsModal.onclick = () => settingsModal.classList.add('hidden');
@@ -751,10 +773,10 @@ function setupCustomEventHandlers() {
 async function init() {
     if (isInitialized) return;
     
-    console.log('🚀 Версия 7.5 — Оптимизация + Облачное хранилище фото');
+    console.log('🚀 Версия 7.6 — Облачная регистрация и синхронизация');
     
     const versionSpan = document.querySelector('.inline-flex.items-center.gap-3 span');
-    if (versionSpan) versionSpan.textContent = '1000 возможностей России · Версия 7.5';
+    if (versionSpan) versionSpan.textContent = '1000 возможностей России · Версия 7.6';
     
     const tasksLoaded = await initTasks();
     if (!tasksLoaded) {
@@ -803,6 +825,12 @@ async function init() {
     setInterval(() => { checkFreePetAfterEscape(); }, 60000);
     updateLastLogin();
     
+    // ============================================================
+    // ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ АВТОРИЗАЦИИ
+    // ============================================================
+    await initAuth();
+    setupAuthModals();
+    
     try {
         await checkAndShowAuth();
     } catch (e) {
@@ -821,7 +849,7 @@ async function init() {
     }
     
     isInitialized = true;
-    console.log('✅ Инициализация версии 7.5 завершена');
+    console.log('✅ Инициализация версии 7.6 завершена');
 }
 
 // Запуск

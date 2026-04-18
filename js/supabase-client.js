@@ -1,58 +1,78 @@
 // js/supabase-client.js
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+// ============================================================
+// SUPABASE КЛИЕНТ — ВСЕ ФУНКЦИИ ДЛЯ РАБОТЫ С ОБЛАКОМ
+// ============================================================
 
-// ============================================================
-// КОНФИГУРАЦИЯ (ВАШИ КЛЮЧИ ИЗ SUPABASE)
-// ============================================================
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 const SUPABASE_URL = 'https://qlupgdgcwtefapzezxbd.supabase.co'
 const SUPABASE_ANON_KEY = 'sb_publishable_vw3kyPzABeFM6Y2kn3XqlA_AerDDJbW'
 
-// Создаём клиент Supabase
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 // ============================================================
 // АУТЕНТИФИКАЦИЯ
 // ============================================================
 
-/**
- * Регистрация нового пользователя
- * @param {string} email - Email пользователя
- * @param {string} password - Пароль (минимум 6 символов)
- * @param {string} username - Имя пользователя
- */
 export async function signUp(email, password, username) {
-    // 1. Регистрируем пользователя в Supabase Auth
+    // 1. Проверяем уникальность имени
+    const isUnique = await isUsernameUnique(username)
+    if (!isUnique) {
+        throw new Error('Имя пользователя уже занято. Выберите другое')
+    }
+    
+    // 2. Регистрация в Supabase Auth
     const { data, error } = await supabase.auth.signUp({
         email: email,
-        password: password
+        password: password,
+        options: {
+            data: { username: username }
+        }
     })
     
-    if (error) throw error
+    if (error) {
+        if (error.message.includes('already registered')) {
+            throw new Error('Этот email уже зарегистрирован')
+        }
+        throw error
+    }
     
-    // 2. Создаём профиль в таблице profiles
+    // 3. Создание профиля
     const { error: profileError } = await supabase
         .from('profiles')
         .insert({
             id: data.user.id,
             username: username,
+            email: email,
             avatar: '🏆',
             level: 1,
             coins: 200,
             total_points: 0,
-            daily_streak: 0
+            daily_streak: 0,
+            is_guest: false
         })
     
     if (profileError) throw profileError
     
+    // 4. Создание записи прогресса
+    const { error: progressError } = await supabase
+        .from('user_progress')
+        .insert({
+            user_id: data.user.id,
+            active_tasks: [],
+            completed_tasks: [],
+            purchased_tasks: [],
+            achievements: [],
+            category_progress: {},
+            pet_data: {},
+            settings: {}
+        })
+    
+    if (progressError) throw progressError
+    
     return data
 }
 
-/**
- * Вход пользователя
- * @param {string} email - Email
- * @param {string} password - Пароль
- */
 export async function signIn(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
@@ -62,46 +82,55 @@ export async function signIn(email, password) {
     return data
 }
 
-/**
- * Выход из аккаунта
- */
 export async function signOut() {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
 }
 
-/**
- * Получение текущего пользователя
- * @returns {Promise<Object|null>} Объект пользователя или null
- */
+export async function resetPassword(email) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password'
+    })
+    if (error) throw error
+}
+
 export async function getCurrentUser() {
     const { data: { user }, error } = await supabase.auth.getUser()
     if (error) return null
     return user
 }
 
-/**
- * Проверка, авторизован ли пользователь
- */
 export async function isAuthenticated() {
     const user = await getCurrentUser()
     return user !== null
 }
 
 // ============================================================
+// ПРОВЕРКИ
+// ============================================================
+
+export async function isUsernameUnique(username) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle()
+    
+    if (error) throw error
+    return !data
+}
+
+// ============================================================
 // ПРОФИЛЬ
 // ============================================================
 
-/**
- * Получение профиля пользователя
- */
 export async function getProfile() {
     const user = await getCurrentUser()
     if (!user) return null
     
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, player_number')
         .eq('id', user.id)
         .single()
     
@@ -109,10 +138,6 @@ export async function getProfile() {
     return data
 }
 
-/**
- * Обновление профиля пользователя
- * @param {Object} updates - Объект с обновляемыми полями
- */
 export async function updateProfile(updates) {
     const user = await getCurrentUser()
     if (!user) throw new Error('Не авторизован')
@@ -128,14 +153,19 @@ export async function updateProfile(updates) {
     return data
 }
 
+export async function getTotalPlayersCount() {
+    const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+    
+    if (error) throw error
+    return count
+}
+
 // ============================================================
 // ПРОГРЕСС
 // ============================================================
 
-/**
- * Сохранение прогресса пользователя в облако
- * @param {Object} progressData - Данные прогресса из user
- */
 export async function saveProgress(progressData) {
     const user = await getCurrentUser()
     if (!user) return
@@ -155,12 +185,8 @@ export async function saveProgress(progressData) {
         })
     
     if (error) throw error
-    return true
 }
 
-/**
- * Загрузка прогресса пользователя из облака
- */
 export async function loadProgress() {
     const user = await getCurrentUser()
     if (!user) return null
@@ -175,20 +201,14 @@ export async function loadProgress() {
     return data
 }
 
-/**
- * Синхронизация локального прогресса с облаком
- * @param {Object} localUser - Локальный объект user
- */
 export async function syncUserWithCloud(localUser) {
     const isAuth = await isAuthenticated()
     if (!isAuth) return false
     
     try {
-        // Загружаем облачный прогресс
         const cloudProgress = await loadProgress()
         
         if (cloudProgress) {
-            // Восстанавливаем данные из облака в локального пользователя
             if (cloudProgress.active_tasks) localUser.activeTasks = cloudProgress.active_tasks
             if (cloudProgress.completed_tasks) localUser.completedTasks = cloudProgress.completed_tasks
             if (cloudProgress.purchased_tasks) localUser.purchasedTasks = cloudProgress.purchased_tasks
@@ -197,13 +217,13 @@ export async function syncUserWithCloud(localUser) {
             if (cloudProgress.pet_data) localUser.pet = cloudProgress.pet_data
             if (cloudProgress.settings) localUser.settings = cloudProgress.settings
             
-            // Загружаем профиль
             const profile = await getProfile()
             if (profile) {
                 localUser.coins = profile.coins
                 localUser.level = profile.level
                 localUser.totalPoints = profile.total_points
                 localUser.dailyStreak = profile.daily_streak
+                localUser.currentAvatar = profile.avatar
             }
         }
         
@@ -214,16 +234,11 @@ export async function syncUserWithCloud(localUser) {
     }
 }
 
-/**
- * Сохранение локального прогресса в облако
- * @param {Object} localUser - Локальный объект user
- */
 export async function saveUserToCloud(localUser) {
     const isAuth = await isAuthenticated()
     if (!isAuth) return false
     
     try {
-        // Сохраняем прогресс
         await saveProgress({
             activeTasks: localUser.activeTasks,
             completedTasks: localUser.completedTasks,
@@ -234,12 +249,12 @@ export async function saveUserToCloud(localUser) {
             settings: localUser.settings
         })
         
-        // Сохраняем профиль
         await updateProfile({
             coins: localUser.coins,
             level: localUser.level,
             total_points: localUser.totalPoints,
-            daily_streak: localUser.dailyStreak
+            daily_streak: localUser.dailyStreak,
+            avatar: localUser.currentAvatar
         })
         
         return true
@@ -250,28 +265,63 @@ export async function saveUserToCloud(localUser) {
 }
 
 // ============================================================
-// УТИЛИТЫ
+// ГОСТЕВОЙ РЕЖИМ
 // ============================================================
 
-/**
- * Подписка на изменения профиля в реальном времени
- * @param {Function} callback - Функция, вызываемая при изменении
- */
-export function subscribeToProfileChanges(callback) {
-    const subscription = supabase
-        .channel('profile_changes')
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'profiles'
-            },
-            (payload) => {
-                callback(payload.new)
-            }
-        )
-        .subscribe()
+export function isGuestMode() {
+    return localStorage.getItem('guestMode') === 'true'
+}
+
+export function enableGuestMode() {
+    localStorage.setItem('guestMode', 'true')
+}
+
+export function disableGuestMode() {
+    localStorage.removeItem('guestMode')
+}
+
+// ============================================================
+// ДРУЗЬЯ (ОСНОВЫ)
+// ============================================================
+
+export async function getFriendsList() {
+    const user = await getCurrentUser()
+    if (!user) return []
     
-    return subscription
+    const { data, error } = await supabase
+        .from('friends')
+        .select('friend_id, profiles!friend_id(username, avatar, player_number)')
+        .eq('user_id', user.id)
+        .eq('status', 'accepted')
+    
+    if (error) throw error
+    return data.map(f => f.profiles)
+}
+
+export async function sendFriendRequest(friendId) {
+    const user = await getCurrentUser()
+    if (!user) throw new Error('Не авторизован')
+    
+    const { error } = await supabase
+        .from('friends')
+        .insert({
+            user_id: user.id,
+            friend_id: friendId,
+            status: 'pending'
+        })
+    
+    if (error) throw error
+}
+
+export async function acceptFriendRequest(friendId) {
+    const user = await getCurrentUser()
+    if (!user) throw new Error('Не авторизован')
+    
+    const { error } = await supabase
+        .from('friends')
+        .update({ status: 'accepted' })
+        .eq('user_id', friendId)
+        .eq('friend_id', user.id)
+    
+    if (error) throw error
 }

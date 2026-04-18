@@ -1,6 +1,6 @@
 // js/about.js
 // ============================================================
-// О ПРОЕКТЕ — ИСТОРИЯ ВЕРСИЙ И ПЛАН РАЗВИТИЯ (версия 7.5)
+// О ПРОЕКТЕ — ИСТОРИЯ ВЕРСИЙ, РАЗРАБОТЧИК, ПЛАН РАЗВИТИЯ (версия 7.6)
 // ============================================================
 
 /**
@@ -10,18 +10,43 @@ export function renderAbout() {
     const container = document.getElementById('aboutView');
     if (!container) return;
     
-    const currentVersion = '7.5';
-    const currentVersionDate = '18 апреля 2026';
+    const currentVersion = '7.6';
+    const currentVersionDate = '19 апреля 2026';
+    
+    // Информация о разработчике
+    const developer = {
+        name: 'InShiro',
+        role: 'Идейный вдохновитель и разработчик',
+        telegram: '@inshiro',
+        email: 'inshiro@example.com',
+        github: 'https://github.com/DokHot'
+    };
     
     // Реальная история создания
     const projectStory = {
         startDate: '14 апреля 2026',
-        daysInDevelopment: 5,
+        daysInDevelopment: 6,
         aiAssistant: 'DeepSeek (ИИ-ассистент)',
-        developer: 'Идейный вдохновитель и разработчик'
+        developer: 'InShiro'
     };
     
     const versionHistory = [
+        {
+            version: '7.6',
+            date: '19 апреля 2026',
+            title: 'Облачная регистрация и синхронизация',
+            changes: [
+                '🔐 Полная система регистрации и входа через Supabase',
+                '👤 Гостевой режим без регистрации',
+                '📧 Восстановление пароля через email',
+                '☁️ Автоматическая синхронизация прогресса между устройствами',
+                '🏅 Порядковый номер игрока (#42 из 1000+)',
+                '🚪 Кнопка выхода из аккаунта в профиле',
+                '🔄 Импорт гостевого прогресса при регистрации',
+                '📊 Отображение общего количества игроков',
+                '🔒 Уникальность имени пользователя'
+            ]
+        },
         {
             version: '7.5',
             date: '18 апреля 2026',
@@ -217,7 +242,17 @@ export function renderAbout() {
     
     const futurePlans = [
         {
-            version: '7.6',
+            version: '7.7',
+            title: 'Социальное взаимодействие',
+            features: [
+                '💬 Личные сообщения между игроками',
+                '✅ Система подтверждения выполнения дел друзьями',
+                '🔔 Push-уведомления о событиях',
+                '🎁 Ежедневные подарки и бонусы'
+            ]
+        },
+        {
+            version: '7.8',
             title: 'Соревнования и экономика',
             features: [
                 '⚔️ Дуэли питомцев',
@@ -233,7 +268,7 @@ export function renderAbout() {
             features: [
                 '📱 PWA (установка на телефон)',
                 '🤖 Сборка Android APK',
-                '☁️ Облачная синхронизация (Firebase)',
+                '☁️ Полная облачная синхронизация',
                 '🔔 Push-уведомления'
             ]
         }
@@ -278,13 +313,41 @@ export function renderAbout() {
                     </div>
                     <div class="text-right">
                         <div class="text-sm opacity-80">⚡ Оптимизация</div>
-                        <div class="text-sm opacity-80">☁️ Облачное хранилище</div>
+                        <div class="text-sm opacity-80">☁️ Облачная синхронизация</div>
+                        <div class="text-sm opacity-80">🔐 Регистрация и вход</div>
                         <div class="text-sm opacity-80">🐾 7 питомцев</div>
                     </div>
                 </div>
                 <p class="mt-4 text-white/90">
                     «1000 возможностей России» — это RPG-трекер, превращающий выполнение реальных дел в увлекательную игру.
                     Покупайте задания, заботьтесь о питомце, соревнуйтесь с друзьями и исследуйте Россию!
+                </p>
+            </div>
+            
+            <!-- Разработчик -->
+            <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white mb-8">
+                <div class="flex justify-between items-start flex-wrap gap-2">
+                    <div>
+                        <span class="text-sm opacity-80">👨‍💻 Разработчик</span>
+                        <h2 class="text-3xl font-bold">${developer.name}</h2>
+                        <p class="text-sm opacity-80 mt-1">${developer.role}</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="flex gap-2">
+                            <a href="${developer.github}" target="_blank" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
+                                <i class="fab fa-github"></i>
+                            </a>
+                            <a href="https://t.me/${developer.telegram.replace('@', '')}" target="_blank" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                            <a href="mailto:${developer.email}" class="bg-white/20 hover:bg-white/30 p-2 rounded-full transition">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <p class="mt-4 text-white/90 text-sm">
+                    Проект создан и поддерживается <strong>InShiro</strong>. Вся обратная связь и предложения приветствуются!
                 </p>
             </div>
             
@@ -340,6 +403,7 @@ export function renderAbout() {
                     <span class="px-3 py-1 bg-pink-100 dark:bg-pink-900/30 rounded-full text-sm">Lottie-анимации</span>
                     <span class="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 rounded-full text-sm">IndexedDB</span>
                     <span class="px-3 py-1 bg-teal-100 dark:bg-teal-900/30 rounded-full text-sm">Service Worker</span>
+                    <span class="px-3 py-1 bg-orange-100 dark:bg-orange-900/30 rounded-full text-sm">Supabase (Auth + Database)</span>
                 </div>
             </div>
             
@@ -350,7 +414,7 @@ export function renderAbout() {
                 </h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                     <div>
-                        <div class="text-2xl font-bold text-green-600">15</div>
+                        <div class="text-2xl font-bold text-green-600">16</div>
                         <div class="text-xs text-gray-500">версий</div>
                     </div>
                     <div>
@@ -374,11 +438,11 @@ export function renderAbout() {
                         <div class="text-xs text-gray-500">питомцев</div>
                     </div>
                     <div>
-                        <div class="text-2xl font-bold text-indigo-600">30+</div>
+                        <div class="text-2xl font-bold text-indigo-600">35+</div>
                         <div class="text-xs text-gray-500">JS модулей</div>
                     </div>
                     <div>
-                        <div class="text-2xl font-bold text-teal-600">3</div>
+                        <div class="text-2xl font-bold text-teal-600">4</div>
                         <div class="text-xs text-gray-500">облачных провайдера</div>
                     </div>
                 </div>
@@ -405,7 +469,8 @@ export function renderAbout() {
                     </p>
                     <p>
                         📈 <strong>Эволюция:</strong> от простого чек-листа до полноценной социальной RPG с 
-                        питомцами, достижениями, таблицей лидеров, облачным хранилищем и системой доверия.
+                        питомцами, достижениями, таблицей лидеров, облачным хранилищем, системой доверия
+                        и полноценной регистрацией пользователей.
                     </p>
                 </div>
             </div>
@@ -418,14 +483,15 @@ export function renderAbout() {
                 <p class="text-sm text-white/90">
                     Особенная благодарность <strong>DeepSeek</strong> — искусственному интеллекту, 
                     который помог реализовать этот проект за рекордные ${projectStory.daysInDevelopment} дней. 
-                    От идеи до полноценной RPG-экосистемы с питомцами, социальными функциями, облачным хранилищем и сотнями заданий.
+                    От идеи до полноценной RPG-экосистемы с питомцами, социальными функциями, облачным хранилищем, 
+                    регистрацией пользователей и сотнями заданий.
                 </p>
                 <p class="text-sm text-white/80 mt-3">
                     🤖 DeepSeek — это не просто помощник, а полноценный соавтор, 
                     который писал код, проектировал архитектуру, отлаживал ошибки и предлагал идеи.
                 </p>
                 <p class="text-sm text-white/80 mt-3">
-                    📊 <strong>Вехи развития:</strong> 15 версий, 5 дней разработки, 
+                    📊 <strong>Вехи развития:</strong> 16 версий, 6 дней разработки, 
                     полный цикл от MVP до социальной RPG-экосистемы с облачной синхронизацией.
                 </p>
             </div>
@@ -447,6 +513,9 @@ export function renderAbout() {
                         <button id="suggestFeatureBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm transition">
                             💡 Предложить идею
                         </button>
+                        <a href="https://t.me/inshiro" target="_blank" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-full text-sm transition flex items-center gap-2">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </a>
                     </div>
                 </div>
             </div>
@@ -457,10 +526,10 @@ export function renderAbout() {
     
     // Обработчики кнопок
     document.getElementById('reportBugBtn')?.addEventListener('click', () => {
-        alert('📧 Для связи: проект находится в разработке\nСпасибо за обратную связь!');
+        alert('📧 Свяжитесь с разработчиком:\nTelegram: @inshiro\nEmail: inshiro@example.com\n\nСпасибо за обратную связь!');
     });
     
     document.getElementById('suggestFeatureBtn')?.addEventListener('click', () => {
-        alert('💡 Идеи можно отправить разработчику через Telegram или почту\n(контакты будут добавлены позже)');
+        alert('💡 Идеи можно отправить разработчику:\nTelegram: @inshiro\nEmail: inshiro@example.com\n\nСпасибо за ваши предложения!');
     });
 }

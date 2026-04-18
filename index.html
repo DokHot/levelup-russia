@@ -3,18 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>1000 возможностей России | Версия 7.5</title>
+    <title>1000 возможностей России | Версия 7.6</title>
     
     <!-- PWA / MANIFEST -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- Preload критических модулей -->
-    <link rel="modulepreload" href="js/main.js">
-    <link rel="modulepreload" href="js/user.js">
-    <link rel="modulepreload" href="js/config.js">
     
     <!-- Preconnect для внешних API -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +25,10 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
+    <!-- ОСНОВНОЙ CSS ФАЙЛ -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- КРИТИЧЕСКИЕ СТИЛИ -->
     <style>
         * {
             margin: 0;
@@ -47,13 +46,240 @@
             background: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
         }
         
+        /* Карточки на всю ширину */
+        .task-card-container {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            min-height: 320px;
+            perspective: 1000px;
+        }
+        
+        .task-card-flipper {
+            position: relative;
+            width: 100% !important;
+            height: 320px;
+            transition: transform 0.5s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .task-card-flipper.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .task-card-front,
+        .task-card-back {
+            position: absolute;
+            width: 100% !important;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .task-card-front {
+            transform: rotateY(0deg);
+            background: white;
+        }
+        
+        .task-card-back {
+            transform: rotateY(180deg);
+            background: white;
+        }
+        
+        body.dark .task-card-front,
+        body.dark .task-card-back {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+        
+        /* Сетка магазина */
+        #shopGrid {
+            display: block !important;
+            width: 100% !important;
+        }
+        
+        #shopGrid .grid {
+            display: grid !important;
+            grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+            gap: 1.5rem;
+            width: 100% !important;
+        }
+        
+        @media (min-width: 768px) {
+            #shopGrid .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            #shopGrid .grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            }
+        }
+        
+        #shopGrid .grid > div {
+            width: 100% !important;
+            display: block !important;
+        }
+        
+        /* Эффект увеличения при наведении */
+        .task-card-container {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            overflow: visible !important;
+        }
+        
+        .task-card-container:hover {
+            transform: scale(1.02);
+            z-index: 10;
+        }
+        
+        /* Центрирование содержимого */
+        .task-card-front,
+        .task-card-back {
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .task-card-front h3,
+        .task-card-back h3 {
+            text-align: center;
+        }
+        
+        /* ВСЕ МОДАЛЬНЫЕ ОКНА БЕЛЫЕ */
+        .fixed.inset-0 > div,
+        [id$="Modal"] > div:first-child,
+        #loginModal > div,
+        #registerModal > div,
+        #resetPasswordModal > div,
+        #profileModal > div,
+        #settingsModal > div,
+        #deadlineModal > div,
+        #surrenderModal > div,
+        #detailModal > div,
+        #dailyBonusModal > div,
+        #questCompleteModal > div,
+        #replaceQuestModal > div,
+        #buyBoosterModal > div,
+        #skipTaskModal > div,
+        #photoUploadModal > div,
+        #addLocationModal > div,
+        #mapMarkerModal > div,
+        #editHistoryModal > div {
+            background: white !important;
+            background-color: white !important;
+            color: #1f2937 !important;
+            border-radius: 1rem !important;
+        }
+        
+        /* Текст в модальных окнах */
+        [id$="Modal"] p,
+        [id$="Modal"] h2,
+        [id$="Modal"] h3,
+        [id$="Modal"] span,
+        [id$="Modal"] label,
+        [id$="Modal"] div {
+            color: #1f2937 !important;
+        }
+        
+        /* Кнопки в модальных окнах */
+        [id$="Modal"] button {
+            color: white !important;
+        }
+        
+        [id$="Modal"] button.bg-gray-100,
+        [id$="Modal"] button.bg-gray-200 {
+            color: #1f2937 !important;
+        }
+        
+        /* Поля ввода в модальных окнах */
+        [id$="Modal"] input,
+        [id$="Modal"] textarea,
+        [id$="Modal"] select {
+            background: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            color: #1f2937 !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem !important;
+        }
+        
+        /* ГРУППЫ КАТЕГОРИЙ В МАГАЗИНЕ — БЕЛЫЕ */
+        .category-group,
+        .category-group-header,
+        .category-group-content {
+            background: white !important;
+        }
+        
+        body.dark .category-group,
+        body.dark .category-group-header,
+        body.dark .category-group-content {
+            background: white !important;
+        }
+        
+        .category-group-header span,
+        .category-group-header i {
+            color: #1f2937 !important;
+        }
+        
+        .category-item {
+            background: #f9fafb !important;
+            color: #1f2937 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+        
+        .category-item:hover {
+            background: #e5e7eb !important;
+        }
+        
+        .category-item.active {
+            background: #10b981 !important;
+            color: white !important;
+        }
+        
+        .category-count {
+            display: inline-block !important;
+            background: #e5e7eb !important;
+            padding: 2px 8px !important;
+            border-radius: 20px !important;
+            font-size: 11px !important;
+            font-weight: 500 !important;
+            color: #1f2937 !important;
+            min-width: 28px !important;
+            text-align: center !important;
+            line-height: 1.4 !important;
+        }
+        
+        .category-item span:first-child {
+            flex: 1 !important;
+            text-align: left !important;
+        }
+        
+        .category-item .category-count {
+            flex-shrink: 0 !important;
+        }
+        
+        /* ЦВЕТНЫЕ ФИЛЬТРЫ СЛОЖНОСТИ */
+        .diff-filter[data-diff="1"] { color: #10b981 !important; }
+        .diff-filter[data-diff="2"] { color: #3b82f6 !important; }
+        .diff-filter[data-diff="3"] { color: #f59e0b !important; }
+        .diff-filter[data-diff="4"] { color: #8b5cf6 !important; }
+        .diff-filter[data-diff="5"] { color: #ef4444 !important; }
+        .diff-filter.active { color: white !important; background: #10b981 !important; }
+        .diff-filter:not(.active) { background: #f3f4f6 !important; }
+        body.dark .diff-filter:not(.active) { background: #374151 !important; }
+        
+        /* Общие стили */
         .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(2px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: white;
+            border-radius: 0.75rem;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
-            border-radius: 0.75rem;
         }
         
         .glass-card:hover {
@@ -62,7 +288,7 @@
         }
         
         body.dark .glass-card {
-            background: rgba(30, 40, 40, 0.95);
+            background: #1f2937;
             color: #e0e0e0;
         }
         
@@ -80,6 +306,7 @@
         .tab-btn.active {
             background: #10b981 !important;
             color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
         
         body.dark .tab-btn:not(.active) {
@@ -135,10 +362,6 @@
             50% { opacity: 0.9; transform: scale(1.01); }
         }
         
-        @media (max-width: 640px) {
-            .tab-btn { padding: 6px 12px; font-size: 12px; }
-        }
-        
         .difficulty-1 { color: #10b981; }
         .difficulty-2 { color: #3b82f6; }
         .difficulty-3 { color: #f59e0b; }
@@ -175,6 +398,42 @@
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
+        
+        @media (max-width: 640px) {
+            .tab-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .tabs-container {
+                gap: 4px;
+            }
+        }
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .rotate-90 {
+            transform: rotate(90deg);
+        }
+        
+        .preserve-3d {
+            transform-style: preserve-3d;
+        }
+        
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
     </style>
 </head>
 <body>
@@ -186,7 +445,7 @@
                 <div class="w-16"></div>
                 <div class="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-full px-5 py-2 shadow-sm">
                     <i class="fas fa-compass text-green-700"></i>
-                    <span class="text-sm font-medium text-gray-700">1000 возможностей · Версия 7.5</span>
+                    <span class="text-sm font-medium text-gray-700">1000 возможностей · Версия 7.6</span>
                     <button id="themeToggle" class="ml-2 text-gray-600 hover:text-gray-900">🌙</button>
                 </div>
                 <div class="flex gap-2">
@@ -289,7 +548,8 @@
                     <button id="tabMap" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🗺️ Карта</button>
                     <button id="tabPhotos" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📸 Фото</button>
                     <button id="tabSearch" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🔍 Поиск</button>
-                    <button id="tabAbout" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-xl">📜 О проекте</button>
+                    <button id="tabAbout" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📜 О проекте</button>
+                    <button id="tabSettings" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-xl">⚙️ Настройки</button>
                 </div>
             </div>
         </div>
@@ -334,13 +594,139 @@
         <div id="mapView" class="fade-in hidden"></div>
         <div id="photosView" class="fade-in hidden"></div>
         <div id="aboutView" class="fade-in hidden"></div>
+        <div id="settingsView" class="fade-in hidden"></div>
         
         <div class="text-center text-gray-400 text-sm mt-8 pb-6">
             💰 Покупай дела, выбирай сроки, получай монеты и повышай уровень!
         </div>
     </div>
     
-    <!-- МОДАЛЬНЫЕ ОКНА -->
+    <!-- ============================================================ -->
+    <!-- МОДАЛЬНЫЕ ОКНА АВТОРИЗАЦИИ -->
+    <!-- ============================================================ -->
+    
+    <!-- МОДАЛЬНОЕ ОКНО ВХОДА -->
+    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold">Вход</h2>
+                <p class="text-sm text-gray-500">Войдите, чтобы синхронизировать прогресс</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">📧 Email</label>
+                <input type="email" id="loginEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Пароль</label>
+                <input type="password" id="loginPassword" placeholder="••••••" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="text-right mb-4">
+                <button id="forgotPasswordBtn" class="text-sm text-green-600 hover:text-green-700">Забыли пароль?</button>
+            </div>
+            <button id="doLoginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Войти
+            </button>
+            <div class="text-center mt-4">
+                <button id="showRegisterFromLoginBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Нет аккаунта? Зарегистрироваться
+                </button>
+            </div>
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">или</span>
+                </div>
+            </div>
+            <button id="guestLoginBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-full font-bold transition">
+                🎮 Продолжить как гость
+            </button>
+            <div class="text-center mt-3">
+                <button id="closeLoginModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- МОДАЛЬНОЕ ОКНО РЕГИСТРАЦИИ -->
+    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">📝</div>
+                <h2 class="text-2xl font-bold">Регистрация</h2>
+                <p class="text-sm text-gray-500">Создайте аккаунт для сохранения прогресса</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">👤 Имя пользователя</label>
+                <input type="text" id="regUsername" placeholder="Как к вам обращаться?" class="w-full px-4 py-2 border rounded-lg">
+                <p class="text-xs text-gray-400 mt-1">От 3 до 20 символов, уникальное</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">📧 Email</label>
+                <input type="email" id="regEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
+                <p class="text-xs text-gray-400 mt-1">Нужен для восстановления пароля</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Пароль</label>
+                <input type="password" id="regPassword" placeholder="минимум 6 символов" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Подтверждение пароля</label>
+                <input type="password" id="regPasswordConfirm" placeholder="повторите пароль" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <button id="doRegisterBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Зарегистрироваться
+            </button>
+            <div class="text-center mt-4">
+                <button id="showLoginFromRegisterBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Уже есть аккаунт? Войти
+                </button>
+            </div>
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">или</span>
+                </div>
+            </div>
+            <button id="guestRegisterBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-full font-bold transition">
+                🎮 Продолжить как гость
+            </button>
+            <div class="text-center mt-3">
+                <button id="closeRegisterModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- МОДАЛЬНОЕ ОКНО ВОССТАНОВЛЕНИЯ ПАРОЛЯ -->
+    <div id="resetPasswordModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold">Восстановление пароля</h2>
+                <p class="text-sm text-gray-500">Введите email для сброса пароля</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">📧 Email</label>
+                <input type="email" id="resetEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <button id="doResetPasswordBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-full font-bold transition">
+                Отправить ссылку для сброса
+            </button>
+            <div class="text-center mt-4">
+                <button id="backToLoginBtn" class="text-sm text-green-600 hover:text-green-700">
+                    ← Вернуться ко входу
+                </button>
+            </div>
+            <div class="text-center mt-3">
+                <button id="closeResetModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ОСТАЛЬНЫЕ МОДАЛЬНЫЕ ОКНА (ИГРОВЫЕ) -->
     <div id="deadlineModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4" id="modalTaskTitle">Выберите срок</h3>
@@ -393,46 +779,6 @@
             <h3 class="text-xl font-bold mb-2">Случайное дело выполнено!</h3>
             <p class="text-gray-600 dark:text-gray-300 mb-4">Вы получили <span id="questRewardAmount" class="font-bold text-green-600">0</span> монет</p>
             <button id="closeQuestModalBtn" class="px-6 py-2 bg-green-600 text-white rounded-full">Отлично!</button>
-        </div>
-    </div>
-    
-    <!-- МОДАЛЬНЫЕ ОКНА ВХОДА И РЕГИСТРАЦИИ -->
-    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
-            <div class="text-center mb-4">
-                <div class="text-5xl mb-2">🔐</div>
-                <h2 class="text-2xl font-bold">Вход</h2>
-            </div>
-            <div class="mb-4">
-                <input type="email" id="loginEmail" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
-            </div>
-            <div class="mb-4">
-                <input type="password" id="loginPassword" placeholder="Пароль" class="w-full px-4 py-2 border rounded-lg">
-            </div>
-            <button id="doLoginBtn" class="w-full bg-green-600 text-white py-2 rounded-full mb-2">Войти</button>
-            <button id="showRegisterBtn" class="w-full text-gray-500 text-sm">Нет аккаунта? Зарегистрироваться</button>
-            <button id="closeLoginModal" class="w-full text-gray-400 text-sm mt-2">Закрыть</button>
-        </div>
-    </div>
-    
-    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
-            <div class="text-center mb-4">
-                <div class="text-5xl mb-2">📝</div>
-                <h2 class="text-2xl font-bold">Регистрация</h2>
-            </div>
-            <div class="mb-4">
-                <input type="text" id="regUsername" placeholder="Имя пользователя" class="w-full px-4 py-2 border rounded-lg">
-            </div>
-            <div class="mb-4">
-                <input type="email" id="regEmail" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
-            </div>
-            <div class="mb-4">
-                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" class="w-full px-4 py-2 border rounded-lg">
-            </div>
-            <button id="doRegisterBtn" class="w-full bg-green-600 text-white py-2 rounded-full mb-2">Зарегистрироваться</button>
-            <button id="showLoginBtn" class="w-full text-gray-500 text-sm">Уже есть аккаунт? Войти</button>
-            <button id="closeRegisterModal" class="w-full text-gray-400 text-sm mt-2">Закрыть</button>
         </div>
     </div>
     

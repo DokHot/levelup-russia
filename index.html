@@ -5,42 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>1000 возможностей России | Версия 7.5</title>
     
-    <!-- ============================================================ -->
-    <!-- PWA / MANIFEST                                                -->
-    <!-- ============================================================ -->
+    <!-- PWA / MANIFEST -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- ============================================================ -->
-    <!-- PRELOAD И PREFETCH (оптимизация загрузки)                     -->
-    <!-- ============================================================ -->
     <!-- Preload критических модулей -->
     <link rel="modulepreload" href="js/main.js">
     <link rel="modulepreload" href="js/user.js">
     <link rel="modulepreload" href="js/config.js">
-    <link rel="modulepreload" href="js/ui.js">
-    <link rel="modulepreload" href="js/utils.js">
     
     <!-- Preconnect для внешних API -->
-    <link rel="preconnect" href="https://api-maps.yandex.ru">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     
-    <!-- Prefetch вероятных следующих модулей -->
-    <link rel="prefetch" href="js/activeTasks.js" as="script">
-    <link rel="prefetch" href="js/shop.js" as="script">
-    <link rel="prefetch" href="js/history.js" as="script">
-    <link rel="prefetch" href="js/achievements.js" as="script">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- ============================================================ -->
-    <!-- CRITICAL CSS (inline для быстрого первого экрана)             -->
-    <!-- ============================================================ -->
+    <!-- Шрифт Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
     <style>
-        /* CRITICAL CSS — только для первого экрана */
         * {
             margin: 0;
             padding: 0;
@@ -48,31 +38,17 @@
             font-family: 'Inter', sans-serif;
         }
         
-        :root {
-            --bg-body: linear-gradient(135deg, #f0f9f4 0%, #d4e6f1 100%);
-            --bg-card: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-            --color-primary: #10b981;
-            --color-primary-hover: #059669;
-            --color-text: #1f2937;
-            --color-text-secondary: #6b7280;
-        }
-        
         body {
-            background: var(--bg-body);
-            transition: background 0.3s ease;
+            background: linear-gradient(135deg, #f0f9f4 0%, #d4e6f1 100%);
             min-height: 100vh;
         }
         
         body.dark {
-            --bg-body: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
-            --bg-card: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            --color-text: #f3f4f6;
-            --color-text-secondary: #9ca3af;
+            background: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
         }
         
-        /* Базовые карточки */
         .glass-card {
-            background: var(--bg-card);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(2px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -85,12 +61,9 @@
             box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
         }
         
-        /* Вкладки */
-        .tabs-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        body.dark .glass-card {
+            background: rgba(30, 40, 40, 0.95);
+            color: #e0e0e0;
         }
         
         .tab-btn {
@@ -105,16 +78,15 @@
         }
         
         .tab-btn.active {
-            background: var(--color-primary) !important;
+            background: #10b981 !important;
             color: white;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
         
-        .tab-btn.active:hover {
-            background: var(--color-primary-hover) !important;
+        body.dark .tab-btn:not(.active) {
+            background: #374151;
+            color: #9ca3af;
         }
         
-        /* Прогресс-бары */
         .level-progress {
             height: 8px;
             background: rgba(0, 0, 0, 0.15);
@@ -129,23 +101,15 @@
             transition: width 0.5s ease;
         }
         
-        /* Анимации */
         .fade-in {
             animation: fadeIn 0.25s ease-in-out;
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Утилиты */
         .hidden {
             display: none !important;
         }
@@ -161,7 +125,6 @@
             color: #78350f;
         }
         
-        /* Срочное дело */
         .urgent-banner {
             background: linear-gradient(135deg, #ef4444, #f97316);
             animation: pulse 1s infinite;
@@ -172,112 +135,75 @@
             50% { opacity: 0.9; transform: scale(1.01); }
         }
         
-        /* Адаптивность */
         @media (max-width: 640px) {
-            .tab-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-            .tabs-container {
-                gap: 4px;
-            }
+            .tab-btn { padding: 6px 12px; font-size: 12px; }
         }
         
-        /* Прелоадер (показывается до загрузки JS) */
-        .preloader {
+        .difficulty-1 { color: #10b981; }
+        .difficulty-2 { color: #3b82f6; }
+        .difficulty-3 { color: #f59e0b; }
+        .difficulty-4 { color: #8b5cf6; }
+        .difficulty-5 { color: #ef4444; }
+        
+        .toast-notification {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-body);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            z-index: 1000;
+            animation: slideUp 0.3s ease-out forwards;
         }
         
-        .preloader.hidden {
-            opacity: 0;
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .confetti-piece {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #fbbf24;
+            z-index: 1000;
+            animation: confetti 2s ease-out forwards;
             pointer-events: none;
         }
         
-        .preloader-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid #e5e7eb;
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
     </style>
-    
-    <!-- ============================================================ -->
-    <!-- АСИНХРОННАЯ ЗАГРУЗКА ОСНОВНОГО CSS                           -->
-    <!-- ============================================================ -->
-    <link rel="preload" href="css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="css/style.css"></noscript>
-    
-    <!-- ============================================================ -->
-    <!-- ВНЕШНИЕ БИБЛИОТЕКИ (асинхронно)                              -->
-    <!-- ============================================================ -->
-    <script src="https://cdn.tailwindcss.com" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Яндекс.Карты API (загружается только при открытии карты) -->
-    <!-- Будет загружен динамически через lazyLoader -->
-    
-    <!-- Lottie Player (для премиум-питомцев) -->
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" defer></script>
 </head>
-<body class="light">
-    
-    <!-- Прелоадер -->
-    <div id="preloader" class="preloader hidden">
-        <div class="preloader-spinner"></div>
-    </div>
-    
+<body>
     <div class="max-w-7xl mx-auto px-4 py-6 md:py-8">
         
-        <!-- ============================================================ -->
-        <!-- ШАПКА С ИКОНКАМИ ПРОФИЛЯ И НАСТРОЕК                          -->
-        <!-- ============================================================ -->
+        <!-- ШАПКА -->
         <div class="text-center mb-6">
             <div class="flex justify-between items-center">
                 <div class="w-16"></div>
                 <div class="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-full px-5 py-2 shadow-sm">
                     <i class="fas fa-compass text-green-700"></i>
                     <span class="text-sm font-medium text-gray-700">1000 возможностей · Версия 7.5</span>
-                    <button id="themeToggle" class="ml-2 text-gray-600 hover:text-gray-900" title="Тема">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button id="bgForestBtn" class="ml-1 text-gray-600 hover:text-green-700 text-sm" title="Лесной фон">🌲</button>
-                    <button id="bgCosmicBtn" class="ml-1 text-gray-600 hover:text-purple-700 text-sm" title="Космический фон">🌌</button>
-                    <button id="bgDefaultBtn" class="ml-1 text-gray-600 hover:text-gray-900 text-sm" title="Стандартный фон">🏠</button>
+                    <button id="themeToggle" class="ml-2 text-gray-600 hover:text-gray-900">🌙</button>
                 </div>
                 <div class="flex gap-2">
-                    <button id="headerProfileBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl" title="Профиль">👤</button>
-                    <button id="headerSettingsBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl" title="Настройки">⚙️</button>
+                    <button id="headerProfileBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl">👤</button>
+                    <button id="headerSettingsBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl">⚙️</button>
                 </div>
             </div>
             <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-green-800 via-blue-700 to-amber-800 bg-clip-text text-transparent mt-4">
                 1000 возможностей России
             </h1>
             <p class="text-gray-600 max-w-2xl mx-auto mt-3">
-                Покупай дела, выбирай сроки, фотографируй, отмечай на карте, синхронизируй в облаке!
+                Покупай дела, выбирай сроки, фотографируй, отмечай на карте!
             </p>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ ПОЛЬЗОВАТЕЛЯ                                   -->
-        <!-- ============================================================ -->
-        <div class="user-card-header rounded-2xl p-5 mb-6 shadow-lg">
+        <!-- ПАНЕЛЬ ПОЛЬЗОВАТЕЛЯ -->
+        <div class="user-card-header rounded-2xl p-5 mb-6 shadow-lg" style="background: linear-gradient(135deg, #e8f5e9, #e3f2fd);">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-4">
                     <div class="text-5xl avatar-display" id="userAvatar">🏆</div>
@@ -319,9 +245,7 @@
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- СРОЧНОЕ ДЕЛО                                                  -->
-        <!-- ============================================================ -->
+        <!-- СРОЧНОЕ ДЕЛО -->
         <div id="urgentTaskBanner" class="mb-6 hidden">
             <div class="urgent-banner rounded-2xl p-4 text-white shadow-xl">
                 <div class="flex flex-wrap justify-between items-center gap-3">
@@ -347,9 +271,7 @@
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- ВКЛАДКИ (компактная версия)                                   -->
-        <!-- ============================================================ -->
+        <!-- ВКЛАДКИ -->
         <div class="tabs-container">
             <button id="tabShop" class="tab-btn">🛒 Магазин</button>
             <button id="tabActive" class="tab-btn">⏳ Активные</button>
@@ -357,25 +279,22 @@
             <button id="tabFriends" class="tab-btn">👥 Друзья</button>
             <button id="tabLeaderboard" class="tab-btn">🏆 Рейтинг</button>
             
-            <!-- Выпадающее меню "Ещё" -->
             <div class="relative inline-block">
                 <button id="moreTabsBtn" class="tab-btn">📋 Ещё ▼</button>
-                <div id="moreTabsDropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg hidden z-20 border border-gray-200 dark:border-gray-700">
-                    <button id="tabHistory" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-xl">📜 История</button>
-                    <button id="tabAchievements" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">🏆 Достижения</button>
-                    <button id="tabRandom" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">🎡 Рулетка</button>
-                    <button id="tabCalendar" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">📅 Календарь</button>
-                    <button id="tabMap" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ Карта</button>
-                    <button id="tabPhotos" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">📸 Фото</button>
-                    <button id="tabSearch" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">🔍 Поиск</button>
-                    <button id="tabAbout" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-xl">📜 О проекте</button>
+                <div id="moreTabsDropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg hidden z-20 border">
+                    <button id="tabHistory" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-xl">📜 История</button>
+                    <button id="tabAchievements" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🏆 Достижения</button>
+                    <button id="tabRandom" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🎡 Рулетка</button>
+                    <button id="tabCalendar" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📅 Календарь</button>
+                    <button id="tabMap" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🗺️ Карта</button>
+                    <button id="tabPhotos" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📸 Фото</button>
+                    <button id="tabSearch" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🔍 Поиск</button>
+                    <button id="tabAbout" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-xl">📜 О проекте</button>
                 </div>
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- ПАНЕЛЬ СТАТИСТИКИ                                             -->
-        <!-- ============================================================ -->
+        <!-- ПАНЕЛЬ СТАТИСТИКИ -->
         <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-md p-5 mb-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-4 flex-wrap">
@@ -401,9 +320,7 @@
             </div>
         </div>
         
-        <!-- ============================================================ -->
-        <!-- КОНТЕЙНЕРЫ ВКЛАДОК (изначально скрыты)                        -->
-        <!-- ============================================================ -->
+        <!-- КОНТЕЙНЕРЫ ВКЛАДОК -->
         <div id="shopView" class="fade-in hidden"></div>
         <div id="activeView" class="fade-in hidden"></div>
         <div id="historyView" class="fade-in hidden"></div>
@@ -423,122 +340,105 @@
         </div>
     </div>
     
-    <!-- ============================================================ -->
-    <!-- МОДАЛЬНЫЕ ОКНА                                                -->
-    <!-- ============================================================ -->
-    
-    <!-- Выбор срока -->
+    <!-- МОДАЛЬНЫЕ ОКНА -->
     <div id="deadlineModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4" id="modalTaskTitle">Выберите срок</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4" id="modalTaskDesc"></p>
             <div class="space-y-3 mb-6" id="deadlineOptions"></div>
             <div class="flex justify-end gap-3">
-                <button id="cancelDeadlineBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition">Отмена</button>
-                <button id="confirmDeadlineBtn" class="px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition">Подтвердить</button>
+                <button id="cancelDeadlineBtn" class="px-4 py-2 bg-gray-100 rounded-full">Отмена</button>
+                <button id="confirmDeadlineBtn" class="px-4 py-2 bg-green-600 text-white rounded-full">Подтвердить</button>
             </div>
         </div>
     </div>
     
-    <!-- Сдача дела -->
     <div id="surrenderModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold text-red-600 mb-4">🏳️ Сдаться?</h3>
-            <p id="surrenderTaskText" class="text-gray-700 dark:text-gray-300 mb-2"></p>
-            <p class="text-sm text-gray-500 mb-4">Вы получите 20% от стоимости дела обратно</p>
+            <p id="surrenderTaskText" class="text-gray-700 dark:text-gray-300 mb-4"></p>
             <div class="flex justify-end gap-3">
-                <button id="cancelSurrenderBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition">Отмена</button>
-                <button id="confirmSurrenderBtn" class="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">Сдаться</button>
+                <button id="cancelSurrenderBtn" class="px-4 py-2 bg-gray-100 rounded-full">Отмена</button>
+                <button id="confirmSurrenderBtn" class="px-4 py-2 bg-red-600 text-white rounded-full">Сдаться</button>
             </div>
         </div>
     </div>
     
-    <!-- Детали дела -->
     <div id="detailModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-0 shadow-2xl">
-            <div class="sticky top-0 z-10 rounded-t-2xl p-5 text-white" id="detailHeader" style="background: linear-gradient(135deg, #10b981, #059669);">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-0">
+            <div id="detailHeader" class="p-5 text-white rounded-t-2xl" style="background: linear-gradient(135deg, #10b981, #059669);">
                 <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span id="detailCategoryIcon" class="text-2xl">🗺️</span>
-                            <span id="detailCategoryBadge" class="px-3 py-1 rounded-full text-sm font-semibold bg-white/20 backdrop-blur-sm"></span>
-                        </div>
-                        <h2 class="text-xl md:text-2xl font-bold break-words pr-8" id="detailTitle"></h2>
+                    <div>
+                        <span id="detailCategoryBadge" class="px-3 py-1 rounded-full text-sm bg-white/20"></span>
+                        <h2 class="text-xl font-bold mt-2" id="detailTitle"></h2>
                     </div>
-                    <button id="closeDetailBtn" class="text-white hover:text-gray-200 text-3xl leading-5 flex-shrink-0 transition">&times;</button>
+                    <button id="closeDetailBtn" class="text-white text-3xl">&times;</button>
                 </div>
             </div>
             <div class="p-6" id="detailContent"></div>
         </div>
     </div>
     
-    <!-- Ежедневный бонус -->
     <div id="dailyBonusModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
             <div class="text-5xl mb-4">🎁</div>
             <h3 class="text-xl font-bold mb-2">Ежедневный бонус!</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">Вы получили <span id="dailyBonusAmount" class="font-bold text-green-600">0</span> монет за <span id="dailyStreakBonus" class="font-bold">1</span> день подряд!</p>
-            <button id="closeDailyBonusBtn" class="px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition">Отлично!</button>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Вы получили <span id="dailyBonusAmount" class="font-bold text-green-600">0</span> монет</p>
+            <button id="closeDailyBonusBtn" class="px-6 py-2 bg-green-600 text-white rounded-full">Отлично!</button>
         </div>
     </div>
     
-    <!-- Выполнение случайного дела -->
     <div id="questCompleteModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
             <div class="text-5xl mb-4">🎉</div>
             <h3 class="text-xl font-bold mb-2">Случайное дело выполнено!</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">Вы получили <span id="questRewardAmount" class="font-bold text-green-600">0</span> монет и <span id="questXpAmount" class="font-bold text-blue-600">0</span> опыта!</p>
-            <button id="closeQuestModalBtn" class="px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition">Отлично!</button>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Вы получили <span id="questRewardAmount" class="font-bold text-green-600">0</span> монет</p>
+            <button id="closeQuestModalBtn" class="px-6 py-2 bg-green-600 text-white rounded-full">Отлично!</button>
         </div>
     </div>
     
-    <!-- Замена дела -->
-    <div id="replaceQuestModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
-            <div class="text-5xl mb-4">🔄</div>
-            <h3 class="text-xl font-bold mb-2">Заменить дело?</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-2">Текущее дело: <span id="currentQuestText" class="font-bold"></span></p>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">Стоимость замены: <span class="font-bold text-red-600">30 монет</span></p>
-            <div class="flex justify-center gap-3">
-                <button id="cancelReplaceBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition">Отмена</button>
-                <button id="confirmReplaceBtn" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition">Заменить</button>
+    <!-- МОДАЛЬНЫЕ ОКНА ВХОДА И РЕГИСТРАЦИИ -->
+    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold">Вход</h2>
             </div>
-        </div>
-    </div>
-    
-    <!-- Покупка бустера -->
-    <div id="buyBoosterModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
-            <div class="text-5xl mb-4" id="boosterModalIcon">⚡</div>
-            <h3 class="text-xl font-bold mb-2" id="boosterModalTitle">Купить бустер?</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-2" id="boosterModalDesc">Эффект: +50% опыта</p>
-            <p class="text-gray-600 dark:text-gray-300 mb-4" id="boosterModalPrice">Стоимость: 50 монет</p>
-            <div class="flex justify-center gap-3">
-                <button id="cancelBoosterBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition">Отмена</button>
-                <button id="confirmBoosterBtn" class="px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition">Купить</button>
+            <div class="mb-4">
+                <input type="email" id="loginEmail" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
             </div>
-        </div>
-    </div>
-    
-    <!-- Пропуск задания -->
-    <div id="skipTaskModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
-            <div class="text-5xl mb-4">⏭️</div>
-            <h3 class="text-xl font-bold mb-2" id="skipModalTitle">Пропустить задание?</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-2" id="skipModalDesc">Вы уверены, что хотите пропустить?</p>
-            <p class="text-gray-600 dark:text-gray-300 mb-4" id="skipModalPrice">Стоимость: 50 монет</p>
-            <div class="flex justify-center gap-3">
-                <button id="cancelSkipBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition">Отмена</button>
-                <button id="confirmSkipBtn" class="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition">Пропустить</button>
+            <div class="mb-4">
+                <input type="password" id="loginPassword" placeholder="Пароль" class="w-full px-4 py-2 border rounded-lg">
             </div>
+            <button id="doLoginBtn" class="w-full bg-green-600 text-white py-2 rounded-full mb-2">Войти</button>
+            <button id="showRegisterBtn" class="w-full text-gray-500 text-sm">Нет аккаунта? Зарегистрироваться</button>
+            <button id="closeLoginModal" class="w-full text-gray-400 text-sm mt-2">Закрыть</button>
         </div>
     </div>
     
-    <!-- Добавление фото -->
+    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">📝</div>
+                <h2 class="text-2xl font-bold">Регистрация</h2>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="regUsername" placeholder="Имя пользователя" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <input type="email" id="regEmail" placeholder="Email" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <button id="doRegisterBtn" class="w-full bg-green-600 text-white py-2 rounded-full mb-2">Зарегистрироваться</button>
+            <button id="showLoginBtn" class="w-full text-gray-500 text-sm">Уже есть аккаунт? Войти</button>
+            <button id="closeRegisterModal" class="w-full text-gray-400 text-sm mt-2">Закрыть</button>
+        </div>
+    </div>
+    
     <div id="photoUploadModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4">📸 Добавить фото</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">Выберите фото для дела: <span id="photoTaskName" class="font-bold"></span></p>
             <input type="file" id="photoFileInput" accept="image/*" class="w-full mb-4">
             <div class="flex justify-end gap-3">
                 <button id="cancelPhotoBtn" class="px-4 py-2 bg-gray-200 rounded-full">Отмена</button>
@@ -547,23 +447,19 @@
         </div>
     </div>
     
-    <!-- Информация о метке на карте -->
     <div id="mapMarkerModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-2" id="markerTaskTitle">Название дела</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-2" id="markerTaskCategory">Категория</p>
-            <p class="text-gray-600 dark:text-gray-300 mb-4" id="markerTaskDate">Дата выполнения</p>
-            <div class="flex justify-end gap-3">
+            <div class="flex justify-end gap-3 mt-4">
                 <button id="closeMarkerBtn" class="px-4 py-2 bg-gray-200 rounded-full">Закрыть</button>
             </div>
         </div>
     </div>
     
-    <!-- Редактирование заметок -->
     <div id="editHistoryModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4">✏️ Редактировать дело</h3>
-            <textarea id="editNoteInput" rows="4" class="w-full p-2 border rounded-lg mb-4" placeholder="Ваши мысли, впечатления, заметки..."></textarea>
+            <textarea id="editNoteInput" rows="4" class="w-full p-2 border rounded-lg mb-4" placeholder="Ваши заметки..."></textarea>
             <div class="flex justify-end gap-3">
                 <button id="cancelEditBtn" class="px-4 py-2 bg-gray-200 rounded-full">Отмена</button>
                 <button id="saveEditBtn" class="px-4 py-2 bg-green-600 text-white rounded-full">Сохранить</button>
@@ -571,145 +467,52 @@
         </div>
     </div>
     
-    <!-- Профиль -->
     <div id="profileModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="sticky top-0 bg-white dark:bg-gray-800 rounded-t-2xl p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">👤 Профиль</h2>
-                <button id="closeProfileModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                <button id="closeProfileModal" class="text-gray-400 text-2xl">&times;</button>
             </div>
-            <div id="profileModalContent" class="p-6"></div>
+            <div id="profileModalContent"></div>
         </div>
     </div>
     
-    <!-- Настройки -->
     <div id="settingsModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="sticky top-0 bg-white dark:bg-gray-800 rounded-t-2xl p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">⚙️ Настройки</h2>
-                <button id="closeSettingsModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                <button id="closeSettingsModal" class="text-gray-400 text-2xl">&times;</button>
             </div>
-            <div id="settingsModalContent" class="p-6"></div>
+            <div id="settingsModalContent"></div>
         </div>
     </div>
     
-    <!-- Добавление локации -->
     <div id="addLocationModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div class="sticky top-0 bg-white dark:bg-gray-800 rounded-t-2xl p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-4">
+            <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">📍 Выберите локацию</h2>
-                <button id="closeLocationModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                <button id="closeLocationModal" class="text-gray-400 text-2xl">&times;</button>
             </div>
-            <div class="p-4">
-                <div id="locationPickerMap" style="height: 400px; width: 100%; border-radius: 16px;"></div>
-                <div class="flex justify-end gap-3 mt-4">
-                    <button id="cancelLocationBtn" class="px-4 py-2 bg-gray-200 rounded-full">Отмена</button>
-                    <button id="confirmLocationBtn" class="px-4 py-2 bg-green-600 text-white rounded-full">Подтвердить</button>
-                </div>
+            <div id="locationPickerMap" style="height: 400px; width: 100%; border-radius: 16px;"></div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="cancelLocationBtn" class="px-4 py-2 bg-gray-200 rounded-full">Отмена</button>
+                <button id="confirmLocationBtn" class="px-4 py-2 bg-green-600 text-white rounded-full">Подтвердить</button>
             </div>
         </div>
     </div>
     
-    <!-- ============================================================ -->
-    <!-- ОСНОВНОЙ СКРИПТ (type="module")                               -->
-    <!-- ============================================================ -->
-    <!-- Замените текущий script на этот -->
-  <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Подавляем предупреждение Tailwind
-        console.warn = (function(original) {
-            return function(...args) {
-                if (args[0] && args[0].includes('tailwindcss.com should not be used')) return;
-                original.apply(console, args);
-            };
-        })(console.warn);
-    </script>
-
-    <!-- ОСНОВНОЙ СКРИПТ ПРИЛОЖЕНИЯ -->
+    <!-- ОСНОВНОЙ СКРИПТ -->
     <script type="module" src="js/main.js"></script>
-    <!-- ============================================================ -->
-    <!-- МОДАЛЬНЫЕ ОКНА ВХОДА И РЕГИСТРАЦИИ (SUPABASE)               -->
-    <!-- ============================================================ -->
     
-    <!-- Модальное окно входа -->
-    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl">
-            <div class="text-center mb-4">
-                <div class="text-5xl mb-2">🔐</div>
-                <h2 class="text-2xl font-bold">Вход в аккаунт</h2>
-                <p class="text-sm text-gray-500 mt-1">Войдите, чтобы синхронизировать прогресс</p>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Email</label>
-                <input type="email" id="loginEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Пароль</label>
-                <input type="password" id="loginPassword" placeholder="••••••" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-            </div>
-            
-            <button id="doLoginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
-                Войти
-            </button>
-            
-            <div class="text-center mt-4">
-                <button id="showRegisterFromLoginBtn" class="text-sm text-green-600 hover:text-green-700">
-                    Нет аккаунта? Зарегистрироваться
-                </button>
-            </div>
-            
-            <div class="text-center mt-3">
-                <button id="closeLoginModal" class="text-sm text-gray-400 hover:text-gray-600">
-                    Закрыть
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальное окно регистрации -->
-    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 shadow-2xl">
-            <div class="text-center mb-4">
-                <div class="text-5xl mb-2">📝</div>
-                <h2 class="text-2xl font-bold">Регистрация</h2>
-                <p class="text-sm text-gray-500 mt-1">Создайте аккаунт для сохранения прогресса</p>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Имя пользователя</label>
-                <input type="text" id="regUsername" placeholder="Как к вам обращаться?" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-                <p class="text-xs text-gray-400 mt-1">От 3 до 20 символов</p>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Email</label>
-                <input type="email" id="regEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-            </div>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-1">Пароль</label>
-                <input type="password" id="regPassword" placeholder="минимум 6 символов" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-            </div>
-            
-            <button id="doRegisterBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
-                Зарегистрироваться
-            </button>
-            
-            <div class="text-center mt-4">
-                <button id="showLoginFromRegisterBtn" class="text-sm text-green-600 hover:text-green-700">
-                    Уже есть аккаунт? Войти
-                </button>
-            </div>
-            
-            <div class="text-center mt-3">
-                <button id="closeRegisterModal" class="text-sm text-gray-400 hover:text-gray-600">
-                    Закрыть
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Подавление предупреждения Tailwind -->
+    <script>
+        (function() {
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('tailwindcss.com should not be used')) return;
+                originalWarn.apply(console, args);
+            };
+        })();
+    </script>
 </body>
 </html>

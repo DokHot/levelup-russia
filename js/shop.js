@@ -1,32 +1,16 @@
-// js/shop.js
-// ============================================================
-// МАГАЗИН — ОТРИСОВКА И УПРАВЛЕНИЕ МАГАЗИНОМ ДЕЛ (версия 7.5)
-// ============================================================
-
+// js/shop.js — ПОЛНАЯ ВЕРСИЯ
 import { TASKS_DB, getTaskById } from './tasks.js';
 import { user, spendCoins, saveUserData } from './user.js';
 import { getCategoryColor, DEADLINE_MULTIPLIERS, CATEGORY_GROUPS } from './config.js';
 import { showToast, showConfetti } from './ui.js';
 import { escapeHtml, addDays } from './utils.js';
 import { renderActiveTasks } from './activeTasks.js';
-import { renderHistory } from './history.js';
-import { checkAchievements } from './achievements.js';
-import { checkSecretAchievements } from './achievements.js';
-
-// ============================================================
-// ПЕРЕМЕННЫЕ
-// ============================================================
 
 let currentCategoryFilter = 'all';
 let currentDifficultyFilter = 'all';
 let openGroups = {};
 let selectedTaskForPurchase = null;
 let selectedDeadline = 7;
-let isRendering = false;
-
-// ============================================================
-// ПОКУПКА ЗАДАНИЯ
-// ============================================================
 
 export function purchaseTask(task) {
     if (task.difficulty > 1 && user.coins < task.price) {
@@ -35,22 +19,15 @@ export function purchaseTask(task) {
     }
     selectedTaskForPurchase = task;
     document.getElementById('modalTaskTitle').innerText = task.text;
-    document.getElementById('modalTaskDesc').innerHTML = `Сложность: ${"★".repeat(task.difficulty)}<br>Цена: ${task.price} монет<br>Базовая награда: ${task.baseReward} монет`;
     
     const optionsDiv = document.getElementById('deadlineOptions');
     optionsDiv.innerHTML = '';
     for (const [days, cfg] of Object.entries(DEADLINE_MULTIPLIERS)) {
         const finalReward = Math.floor(task.baseReward * cfg.multiplier);
         optionsDiv.innerHTML += `
-            <label class="flex items-center justify-between p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition deadline-option">
-                <div>
-                    <span class="font-bold">${cfg.icon} ${cfg.name}</span>
-                    <div class="text-sm text-gray-500">×${cfg.multiplier}</div>
-                </div>
-                <div class="text-right">
-                    <div class="font-bold text-green-600">${finalReward} ₿</div>
-                    <div class="text-xs text-red-500">штраф: ${cfg.penalty * 100}%</div>
-                </div>
+            <label class="flex items-center justify-between p-3 border rounded-xl cursor-pointer deadline-option">
+                <div><span class="font-bold">${cfg.icon} ${cfg.name}</span><div class="text-sm">×${cfg.multiplier}</div></div>
+                <div class="text-right"><div class="font-bold text-green-600">${finalReward} ₿</div><div class="text-xs text-red-500">штраф: ${cfg.penalty * 100}%</div></div>
                 <input type="radio" name="deadline" value="${days}" ${days == 7 ? 'checked' : ''} class="ml-3">
             </label>
         `;
@@ -102,10 +79,6 @@ export function confirmPurchase() {
     renderActiveTasks();
 }
 
-// ============================================================
-// ФИЛЬТРАЦИЯ
-// ============================================================
-
 function updateCategoryCounts() {
     for (const group of CATEGORY_GROUPS) {
         for (const cat of group.categories) {
@@ -119,42 +92,36 @@ function updateCategoryCounts() {
 export function renderCategoryFilters() {
     const container = document.getElementById('categoryGroupsList');
     if (!container) return;
-    
     updateCategoryCounts();
     
     let html = '';
     for (let gIdx = 0; gIdx < CATEGORY_GROUPS.length; gIdx++) {
         const group = CATEGORY_GROUPS[gIdx];
         const isGroupOpen = openGroups[gIdx] === true;
-        
         html += `
-            <div class="category-group">
-                <div class="category-group-header" data-group-index="${gIdx}">
-                    <span>${group.icon} ${group.name}</span>
-                    <i class="fas fa-chevron-right chevron ${isGroupOpen ? 'rotate-90' : ''}"></i>
+            <div class="category-group mb-2 border rounded-lg overflow-hidden">
+                <div class="category-group-header p-3 cursor-pointer bg-gray-50 flex justify-between items-center" data-group-index="${gIdx}">
+                    <span class="font-bold">${group.icon} ${group.name}</span>
+                    <i class="fas fa-chevron-right chevron ${isGroupOpen ? 'rotate-90' : ''} transition-transform"></i>
                 </div>
-                <div class="category-group-content ${isGroupOpen ? 'open' : ''}">
+                <div class="category-group-content ${isGroupOpen ? 'block' : 'hidden'} p-2 bg-white">
         `;
-        
         for (const catName of group.categories) {
-            const count = group.counts ? (group.counts[catName] || 0) : 0;
+            const count = group.counts?.[catName] || 0;
             const isActive = currentCategoryFilter === catName;
             html += `
-                <div class="category-item ${isActive ? 'active' : ''}" data-category="${escapeHtml(catName)}">
+                <div class="category-item p-2 rounded-lg cursor-pointer hover:bg-green-50 flex justify-between items-center ${isActive ? 'bg-green-100 text-green-700 font-bold' : ''}" data-category="${escapeHtml(catName)}">
                     <span>${catName}</span>
-                    <span class="category-count">${count}</span>
+                    <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full">${count}</span>
                 </div>
             `;
         }
-        
         html += `</div></div>`;
     }
-    
     container.innerHTML = html;
     
     document.querySelectorAll('.category-group-header').forEach(header => {
-        header.addEventListener('click', (e) => {
-            e.stopPropagation();
+        header.addEventListener('click', () => {
             const groupIdx = parseInt(header.dataset.groupIndex);
             openGroups[groupIdx] = !openGroups[groupIdx];
             renderCategoryFilters();
@@ -162,137 +129,75 @@ export function renderCategoryFilters() {
     });
     
     document.querySelectorAll('.category-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.stopPropagation();
+        item.addEventListener('click', () => {
             const category = item.dataset.category;
             currentCategoryFilter = currentCategoryFilter === category ? 'all' : category;
             renderCategoryFilters();
             renderShop();
         });
     });
-    
-    const resetBtn = document.getElementById('resetCategoryFilterBtn');
-    if (resetBtn) {
-        resetBtn.onclick = () => {
-            currentCategoryFilter = 'all';
-            renderCategoryFilters();
-            renderShop();
-        };
-    }
 }
 
-// ============================================================
-// ОТРИСОВКА МАГАЗИНА (с сеткой 3 колонки)
-// ============================================================
-
 export function renderShop() {
-    if (isRendering) return;
-    isRendering = true;
-    
     const grid = document.getElementById('shopGrid');
-    if (!grid) {
-        isRendering = false;
-        return;
-    }
+    if (!grid) return;
     
-    // Получаем отфильтрованные задачи
     let filtered = TASKS_DB.filter(t => !user.purchasedTasks.includes(t.id));
-    
-    if (currentCategoryFilter !== 'all') {
-        filtered = filtered.filter(t => t.category === currentCategoryFilter);
-    }
-    
-    if (currentDifficultyFilter !== 'all') {
-        filtered = filtered.filter(t => t.difficulty === parseInt(currentDifficultyFilter));
-    }
+    if (currentCategoryFilter !== 'all') filtered = filtered.filter(t => t.category === currentCategoryFilter);
+    if (currentDifficultyFilter !== 'all') filtered = filtered.filter(t => t.difficulty === parseInt(currentDifficultyFilter));
     
     if (filtered.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">✨ Все дела куплены или нет дел в этой категории!</div>';
-        isRendering = false;
+        grid.innerHTML = '<div class="text-center py-12 text-gray-500">✨ Все дела куплены!</div>';
         return;
     }
     
-    // Рендерим с сеткой 3 колонки
-    let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
-    
+    // Сетка 3 колонки с переворотом карточек
+    let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">';
     for (const task of filtered) {
         const categoryColor = getCategoryColor(task.category);
-        const escapedText = escapeHtml(task.text);
-        const escapedCategory = escapeHtml(task.category);
-        
         html += `
-            <div class="task-card-container w-full" data-task-id="${task.id}">
-                <div class="task-card-flipper w-full" data-task-id="${task.id}">
-                    <div class="task-card-front p-4 w-full cursor-pointer flex flex-col" style="border-left: 6px solid ${categoryColor}; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="category-tag px-2 py-1 rounded-full text-xs font-semibold" style="color: ${categoryColor};">${escapedCategory}</span>
-                            <span class="difficulty-${task.difficulty} font-bold text-sm">${"★".repeat(task.difficulty)}</span>
+            <div class="task-card-container group perspective-1000" data-task-id="${task.id}">
+                <div class="task-card-flipper relative w-full h-80 transition-all duration-500 preserve-3d cursor-pointer">
+                    <div class="task-card-front absolute w-full h-full backface-hidden rounded-xl p-4 shadow-lg" style="background: white; border-left: 6px solid ${categoryColor};">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs px-2 py-1 rounded-full" style="background: ${categoryColor}20; color: ${categoryColor};">${task.category}</span>
+                            <span class="difficulty-${task.difficulty}">${"★".repeat(task.difficulty)}</span>
                         </div>
-                        <h3 class="font-bold text-lg mb-2 leading-tight">${escapedText}</h3>
-                        <p class="text-sm text-gray-500 mb-3 line-clamp-2 flex-grow">${escapedText.substring(0, 100)}${escapedText.length > 100 ? '...' : ''}</p>
-                        <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                            <div>
-                                <div class="text-sm font-semibold text-gray-700">💰 Награда: ${task.baseReward} ₿</div>
-                                <div class="text-xs text-gray-500">⭐ Опыт: +${task.baseXP} XP</div>
+                        <h3 class="font-bold text-lg mt-2 line-clamp-2">${escapeHtml(task.text)}</h3>
+                        <p class="text-sm text-gray-500 mt-2 line-clamp-3">${escapeHtml(task.text.substring(0, 120))}...</p>
+                        <div class="absolute bottom-4 left-4 right-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm">💰 ${task.baseReward} ₿</span>
+                                <span class="text-xs">⭐ +${task.baseXP} XP</span>
                             </div>
-                            <button class="purchase-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm shadow-md transition-all" data-id="${task.id}">${task.isFree ? 'ВЗЯТЬ' : `КУПИТЬ ${task.price}₿`}</button>
+                            <button class="purchase-btn w-full py-2 rounded-full text-white font-bold transition-transform hover:scale-105" style="background: ${categoryColor};" data-id="${task.id}">${task.isFree ? 'ВЗЯТЬ БЕСПЛАТНО' : `КУПИТЬ ${task.price} ₿`}</button>
                         </div>
                     </div>
-                    <div class="task-card-back p-5 w-full absolute top-0 left-0 overflow-auto flex flex-col cursor-pointer" style="transform: rotateY(180deg); backface-visibility: hidden;">
-                        <h3 class="font-bold text-base mb-3 pr-6">${escapedText}</h3>
-                        <div class="space-y-3 text-sm">
-                            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                                <div class="text-xs text-gray-500 uppercase mb-1">⭐ Сложность</div>
-                                <div class="font-bold difficulty-${task.difficulty}">${"★".repeat(task.difficulty)}</div>
-                            </div>
-                            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                                <div class="text-xs text-gray-500 uppercase mb-1">💰 Цена и награда</div>
-                                <div class="flex justify-between flex-wrap gap-2">
-                                    <span>💰 Цена: ${task.price} монет</span>
-                                    <span>🎁 Награда: ${task.baseReward} монет</span>
-                                    <span>⭐ Опыт: +${task.baseXP} XP</span>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-                                <div class="text-xs text-gray-500 uppercase mb-1">📝 Описание</div>
-                                <p class="text-gray-600 dark:text-gray-300">${escapedText}</p>
-                            </div>
+                    <div class="task-card-back absolute w-full h-full backface-hidden rounded-xl p-4 shadow-lg overflow-auto" style="background: white; transform: rotateY(180deg);">
+                        <h3 class="font-bold text-lg mb-3">${escapeHtml(task.text)}</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="p-2 bg-gray-50 rounded-lg"><span class="font-bold">⭐ Сложность:</span> ${"★".repeat(task.difficulty)}</div>
+                            <div class="p-2 bg-gray-50 rounded-lg"><span class="font-bold">💰 Цена:</span> ${task.price} ₿</div>
+                            <div class="p-2 bg-gray-50 rounded-lg"><span class="font-bold">🎁 Награда:</span> ${task.baseReward} ₿</div>
+                            <div class="p-2 bg-gray-50 rounded-lg"><span class="font-bold">⭐ Опыт:</span> +${task.baseXP} XP</div>
                         </div>
-                        <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            <button class="purchase-btn w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full text-sm shadow-md transition-all" data-id="${task.id}">${task.isFree ? 'ВЗЯТЬ БЕСПЛАТНО' : `КУПИТЬ ЗА ${task.price} ₿`}</button>
-                        </div>
+                        <button class="purchase-btn w-full mt-4 py-2 rounded-full text-white font-bold" style="background: ${categoryColor};" data-id="${task.id}">${task.isFree ? 'ВЗЯТЬ' : 'КУПИТЬ'}</button>
                     </div>
                 </div>
             </div>
         `;
     }
-    
     html += '</div>';
     grid.innerHTML = html;
     
-    // Обработчики переворота карточек
+    // Обработчики переворота
     document.querySelectorAll('.task-card-flipper').forEach(flipper => {
-        const frontSide = flipper.querySelector('.task-card-front');
-        const backSide = flipper.querySelector('.task-card-back');
-        
-        if (frontSide) {
-            frontSide.addEventListener('click', (e) => {
-                if (e.target.classList?.contains('purchase-btn')) return;
-                e.stopPropagation();
-                flipper.classList.add('flipped');
-            });
-        }
-        
-        if (backSide) {
-            backSide.addEventListener('click', (e) => {
-                if (e.target.classList?.contains('purchase-btn')) return;
-                e.stopPropagation();
-                flipper.classList.remove('flipped');
-            });
-        }
+        flipper.addEventListener('click', (e) => {
+            if (e.target.classList?.contains('purchase-btn')) return;
+            flipper.classList.toggle('flipped');
+        });
     });
     
-    // Обработчики покупок
     document.querySelectorAll('.purchase-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -301,21 +206,12 @@ export function renderShop() {
             if (task) purchaseTask(task);
         });
     });
-    
-    isRendering = false;
 }
-
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ ФИЛЬТРОВ
-// ============================================================
 
 export function initDifficultyFilters() {
     document.querySelectorAll('.diff-filter').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.diff-filter').forEach(b => {
-                b.classList.remove('active', 'bg-green-600', 'text-white');
-                b.classList.add('bg-gray-200');
-            });
+            document.querySelectorAll('.diff-filter').forEach(b => b.classList.remove('active', 'bg-green-600', 'text-white'));
             btn.classList.add('active', 'bg-green-600', 'text-white');
             currentDifficultyFilter = btn.dataset.diff;
             renderShop();

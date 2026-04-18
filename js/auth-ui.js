@@ -286,7 +286,7 @@ export function setupAuthUI() {
     }
 }
 
-/**
+//**
  * Меню профиля для авторизованного пользователя
  */
 function showAuthProfileMenu() {
@@ -297,11 +297,35 @@ function showAuthProfileMenu() {
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full mx-4 p-6 text-center">
             <div class="text-5xl mb-4">${user.currentAvatar || '👤'}</div>
             <h3 class="text-xl font-bold mb-1">${user.account?.username || 'Игрок'}</h3>
-            <p class="text-sm text-gray-500 mb-4">${currentUserEmail || ''}</p>
-            <p class="text-sm mb-4">☁️ Синхронизация включена</p>
+            <p class="text-sm text-gray-500 mb-2">${currentUserEmail || ''}</p>
+            
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span>💰 Монет:</span>
+                    <span class="font-bold">${user.coins || 0}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span>⭐ Уровень:</span>
+                    <span class="font-bold">${user.level || 1}</span>
+                </div>
+                <div class="flex justify-between text-sm mt-1">
+                    <span>✅ Выполнено дел:</span>
+                    <span class="font-bold">${user.stats?.tasksCompleted || 0}</span>
+                </div>
+            </div>
+            
+            <div class="text-xs text-gray-400 mb-4">
+                ☁️ Прогресс синхронизируется автоматически
+            </div>
+            
             <button id="logoutFromMenuBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-full font-bold transition mb-2">
                 🚪 Выйти из аккаунта
             </button>
+            
+            <button id="syncNowMenuBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-full font-bold transition mb-2">
+                🔄 Синхронизировать сейчас
+            </button>
+            
             <button id="closeMenuBtn" class="w-full text-gray-400 hover:text-gray-600 text-sm">
                 Закрыть
             </button>
@@ -310,15 +334,29 @@ function showAuthProfileMenu() {
     
     document.body.appendChild(menu)
     
+    // Кнопка выхода
     document.getElementById('logoutFromMenuBtn')?.addEventListener('click', () => {
         menu.remove()
         handleLogout()
     })
     
+    // Кнопка принудительной синхронизации
+    document.getElementById('syncNowMenuBtn')?.addEventListener('click', async () => {
+        try {
+            showToast('🔄 Синхронизация...', 'info')
+            await saveUserToCloud(user)
+            showToast('✅ Прогресс синхронизирован!', 'success')
+        } catch (error) {
+            showToast('❌ Ошибка синхронизации', 'error')
+        }
+    })
+    
+    // Кнопка закрытия
     document.getElementById('closeMenuBtn')?.addEventListener('click', () => {
         menu.remove()
     })
     
+    // Закрытие по клику на фон
     menu.addEventListener('click', (e) => {
         if (e.target === menu) menu.remove()
     })

@@ -1495,3 +1495,19 @@ body.dark .dropdown-tab-btn:hover {
 .task-card-front, .task-card-back {
     height: 100%;
 }
+/* Для переворота карточек магазина */
+.preserve-3d {
+    transform-style: preserve-3d;
+}
+
+.backface-hidden {
+    backface-visibility: hidden;
+}
+
+.task-card-flipper.flipped {
+    transform: rotateY(180deg);
+}
+
+.task-card-front, .task-card-back {
+    transition: transform 0.5s ease;
+}

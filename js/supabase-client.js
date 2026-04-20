@@ -15,13 +15,18 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 // ============================================================
 
 export async function signUp(email, password, username) {
-    // 1. Проверяем уникальность имени
-    const isUnique = await isUsernameUnique(username)
-    if (!isUnique) {
+    // Проверяем уникальность имени
+    const { data: existing } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle()
+    
+    if (existing) {
         throw new Error('Имя пользователя уже занято. Выберите другое')
     }
     
-    // 2. Регистрация в Supabase Auth
+    // Регистрация в Supabase Auth
     const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
@@ -70,21 +75,6 @@ export async function getCurrentUser() {
 export async function isAuthenticated() {
     const user = await getCurrentUser()
     return user !== null
-}
-
-// ============================================================
-// ПРОВЕРКИ
-// ============================================================
-
-export async function isUsernameUnique(username) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-        .maybeSingle()
-    
-    if (error && error.code !== 'PGRST116') throw error
-    return !data
 }
 
 // ============================================================
@@ -229,4 +219,19 @@ export async function saveUserToCloud(localUser) {
         console.error('Save to cloud error:', error)
         return false
     }
+}
+
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ============================================================
+
+export async function isUsernameUnique(username) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle()
+    
+    if (error && error.code !== 'PGRST116') throw error
+    return !data
 }

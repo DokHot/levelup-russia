@@ -37,39 +37,6 @@ export async function signUp(email, password, username) {
         throw error
     }
     
-    // 3. Создание профиля
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-            id: data.user.id,
-            username: username,
-            email: email,
-            avatar: '🏆',
-            level: 1,
-            coins: 200,
-            total_points: 0,
-            daily_streak: 0,
-            is_guest: false
-        })
-    
-    if (profileError) throw profileError
-    
-    // 4. Создание записи прогресса
-    const { error: progressError } = await supabase
-        .from('user_progress')
-        .insert({
-            user_id: data.user.id,
-            active_tasks: [],
-            completed_tasks: [],
-            purchased_tasks: [],
-            achievements: [],
-            category_progress: {},
-            pet_data: {},
-            settings: {}
-        })
-    
-    if (progressError) throw progressError
-    
     return data
 }
 
@@ -116,7 +83,7 @@ export async function isUsernameUnique(username) {
         .eq('username', username)
         .maybeSingle()
     
-    if (error) throw error
+    if (error && error.code !== 'PGRST116') throw error
     return !data
 }
 
@@ -130,7 +97,7 @@ export async function getProfile() {
     
     const { data, error } = await supabase
         .from('profiles')
-        .select('*, player_number')
+        .select('*')
         .eq('id', user.id)
         .single()
     

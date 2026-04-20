@@ -5,8 +5,8 @@
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
-const SUPABASE_URL = 'https://qlupgdgcwtefapzezxbd.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_vw3kyPzABeFM6Y2kn3XqlA_AerDDJbW'
+const SUPABASE_URL = 'https://pxznbbvpkhgkhfqpxwyd.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_7tX6LpuwjpMLKZzJv5CPTg_unwHwBdy'
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
@@ -262,66 +262,4 @@ export async function saveUserToCloud(localUser) {
         console.error('Save to cloud error:', error)
         return false
     }
-}
-
-// ============================================================
-// ГОСТЕВОЙ РЕЖИМ
-// ============================================================
-
-export function isGuestMode() {
-    return localStorage.getItem('guestMode') === 'true'
-}
-
-export function enableGuestMode() {
-    localStorage.setItem('guestMode', 'true')
-}
-
-export function disableGuestMode() {
-    localStorage.removeItem('guestMode')
-}
-
-// ============================================================
-// ДРУЗЬЯ (ОСНОВЫ)
-// ============================================================
-
-export async function getFriendsList() {
-    const user = await getCurrentUser()
-    if (!user) return []
-    
-    const { data, error } = await supabase
-        .from('friends')
-        .select('friend_id, profiles!friend_id(username, avatar, player_number)')
-        .eq('user_id', user.id)
-        .eq('status', 'accepted')
-    
-    if (error) throw error
-    return data.map(f => f.profiles)
-}
-
-export async function sendFriendRequest(friendId) {
-    const user = await getCurrentUser()
-    if (!user) throw new Error('Не авторизован')
-    
-    const { error } = await supabase
-        .from('friends')
-        .insert({
-            user_id: user.id,
-            friend_id: friendId,
-            status: 'pending'
-        })
-    
-    if (error) throw error
-}
-
-export async function acceptFriendRequest(friendId) {
-    const user = await getCurrentUser()
-    if (!user) throw new Error('Не авторизован')
-    
-    const { error } = await supabase
-        .from('friends')
-        .update({ status: 'accepted' })
-        .eq('user_id', friendId)
-        .eq('friend_id', user.id)
-    
-    if (error) throw error
 }

@@ -44,7 +44,7 @@ export function getRemainingTime(deadline) {
 }
 
 // ============================================================
-// ESCAPE HTML
+// ESCAPE HTML (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 // ============================================================
 
 export function escapeHtml(str) {

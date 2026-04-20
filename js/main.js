@@ -830,13 +830,7 @@ async function init() {
     // ============================================================
     await initAuth();
     setupAuthModals();
-    
-    try {
-        await checkAndShowAuth();
-    } catch (e) {
-        console.warn('Auth check failed:', e);
-    }
-    
+        
     prefetchResources(['js/activeTasks.js', 'js/history.js', 'js/achievements.js']);
     window.switchTab('shop');
     

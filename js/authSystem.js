@@ -1,21 +1,15 @@
 // js/authSystem.js
 // ============================================================
-// СИСТЕМА АВТОРИЗАЦИИ — УПРАВЛЕНИЕ ВХОДОМ, РЕГИСТРАЦИЕЙ, ГОСТЕВЫМ РЕЖИМОМ
+// СИСТЕМА АВТОРИЗАЦИИ — ПОЛНАЯ ВЕРСИЯ
 // ============================================================
 
 import { 
-    supabase, signUp, signIn, signOut, resetPassword,
-    getCurrentUser, isAuthenticated, getProfile, getTotalPlayersCount,
-    syncUserWithCloud, saveUserToCloud, isGuestMode, enableGuestMode, disableGuestMode
+    signUp, signIn, signOut, resetPassword,
+    isAuthenticated, getProfile, getTotalPlayersCount,
+    syncUserWithCloud, saveUserToCloud
 } from './supabase-client.js'
-import { user, saveUserData, loadUserData, updateUserCard } from './user.js'
+import { user, saveUserData, updateUserCard } from './user.js'
 import { showToast, showConfetti } from './ui.js'
-
-// ============================================================
-// ПЕРЕМЕННЫЕ
-// ============================================================
-
-let onAuthCallback = null
 
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАПУСКЕ
@@ -24,25 +18,14 @@ let onAuthCallback = null
 export async function initAuth() {
     console.log('🔐 Инициализация системы авторизации...')
     
-    // Проверяем сессию в Supabase
     const authenticated = await isAuthenticated()
-    const guestMode = isGuestMode()
     
     if (authenticated) {
-        // Пользователь авторизован в Supabase
         console.log('✅ Найдена активная сессия Supabase')
         await loadUserFromCloud()
-        disableGuestMode()
         showWelcomeBack()
         return true
-    } else if (guestMode) {
-        // Гостевой режим
-        console.log('👤 Гостевой режим')
-        loadUserData()
-        showToast('👋 Добро пожаловать в гостевом режиме! Зарегистрируйтесь, чтобы сохранить прогресс', 'info')
-        return true
     } else {
-        // Нет авторизации — показываем окно входа
         console.log('❌ Нет активной сессии, показываем окно входа')
         showAuthModal()
         return false
@@ -55,17 +38,14 @@ export async function initAuth() {
 
 async function loadUserFromCloud() {
     try {
-        // Загружаем профиль
         const profile = await getProfile()
         if (!profile) {
             console.warn('Профиль не найден')
             return
         }
         
-        // Загружаем прогресс
         await syncUserWithCloud(user)
         
-        // Обновляем локальные данные
         user.account = user.account || {}
         user.account.username = profile.username
         user.account.isGuest = false
@@ -103,10 +83,11 @@ function showWelcomeNew(username) {
 }
 
 // ============================================================
-// МОДАЛЬНЫЕ ОКНА
+// УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ
 // ============================================================
 
 export function showAuthModal() {
+    hideAuthModals()
     const loginModal = document.getElementById('loginModal')
     if (loginModal) loginModal.classList.remove('hidden')
 }
@@ -123,6 +104,7 @@ export function showRegisterModal() {
     hideAuthModals()
     const registerModal = document.getElementById('registerModal')
     if (registerModal) registerModal.classList.remove('hidden')
+    console.log('✅ Окно регистрации открыто')
 }
 
 export function showResetPasswordModal() {
@@ -136,7 +118,6 @@ export function showResetPasswordModal() {
 // ============================================================
 
 export async function handleRegister(email, password, passwordConfirm, username) {
-    // Валидация
     if (!username || username.length < 3) {
         showToast('❌ Имя пользователя должно быть не менее 3 символов', 'error')
         return false
@@ -160,25 +141,11 @@ export async function handleRegister(email, password, passwordConfirm, username)
     try {
         showToast('🔄 Регистрация...', 'info')
         
-        // Сохраняем гостевой прогресс до регистрации
-        const guestProgress = { ...user }
-        
-        // Регистрация
         await signUp(email, password, username)
-        
-        // Вход после регистрации
         await signIn(email, password)
-        
-        // Перенос гостевого прогресса
-        if (guestProgress.stats?.tasksCompleted > 0) {
-            await saveUserToCloud(guestProgress)
-        }
-        
-        // Загрузка данных из облака
         await loadUserFromCloud()
         
         hideAuthModals()
-        disableGuestMode()
         showWelcomeNew(username)
         
         return true
@@ -204,7 +171,6 @@ export async function handleLogin(email, password) {
         await loadUserFromCloud()
         
         hideAuthModals()
-        disableGuestMode()
         showWelcomeBack()
         
         return true
@@ -238,45 +204,18 @@ export async function handleResetPassword(email) {
 }
 
 // ============================================================
-// ГОСТЕВОЙ РЕЖИМ
-// ============================================================
-
-export function handleGuestMode() {
-    enableGuestMode()
-    loadUserData()
-    hideAuthModals()
-    showToast('👋 Добро пожаловать в гостевом режиме!', 'success')
-    
-    // Генерируем случайное имя для гостя
-    if (!user.account?.username) {
-        const guestName = 'Гость_' + Math.floor(Math.random() * 10000)
-        user.account = user.account || {}
-        user.account.username = guestName
-        user.account.isGuest = true
-        saveUserData()
-        updateUserCard()
-    }
-    
-    return true
-}
-
-// ============================================================
 // ВЫХОД
 // ============================================================
 
 export async function handleLogout() {
     try {
-        // Сохраняем прогресс перед выходом
         await saveUserToCloud(user)
         await signOut()
-        disableGuestMode()
         
-        // Очищаем локальные данные
         localStorage.removeItem('russia1000_user')
+        localStorage.removeItem('guestMode')
         
         showToast('👋 Вы вышли из аккаунта', 'info')
-        
-        // Перезагружаем страницу для сброса состояния
         setTimeout(() => location.reload(), 1000)
     } catch (error) {
         console.error('Logout error:', error)
@@ -289,27 +228,10 @@ export async function handleLogout() {
 // ============================================================
 
 export function setupAuthModals() {
-    // Кнопки входа/регистрации
+    console.log('🔧 Настройка модальных окон авторизации...')
+    
+    // Кнопки входа
     const doLoginBtn = document.getElementById('doLoginBtn')
-    const doRegisterBtn = document.getElementById('doRegisterBtn')
-    const doResetPasswordBtn = document.getElementById('doResetPasswordBtn')
-    
-    // Кнопки переключения между модальными окнами
-    const showRegisterFromLoginBtn = document.getElementById('showRegisterFromLoginBtn')
-    const showLoginFromRegisterBtn = document.getElementById('showLoginFromRegisterBtn')
-    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn')
-    const backToLoginBtn = document.getElementById('backToLoginBtn')
-    
-    // Гостевой режим
-    const guestLoginBtn = document.getElementById('guestLoginBtn')
-    const guestRegisterBtn = document.getElementById('guestRegisterBtn')
-    
-    // Кнопки закрытия
-    const closeLoginModal = document.getElementById('closeLoginModal')
-    const closeRegisterModal = document.getElementById('closeRegisterModal')
-    const closeResetModal = document.getElementById('closeResetModal')
-    
-    // ========== ВХОД ==========
     if (doLoginBtn) {
         doLoginBtn.onclick = async () => {
             const email = document.getElementById('loginEmail')?.value
@@ -318,7 +240,8 @@ export function setupAuthModals() {
         }
     }
     
-    // ========== РЕГИСТРАЦИЯ ==========
+    // Кнопки регистрации
+    const doRegisterBtn = document.getElementById('doRegisterBtn')
     if (doRegisterBtn) {
         doRegisterBtn.onclick = async () => {
             const username = document.getElementById('regUsername')?.value
@@ -329,7 +252,8 @@ export function setupAuthModals() {
         }
     }
     
-    // ========== ВОССТАНОВЛЕНИЕ ПАРОЛЯ ==========
+    // Восстановление пароля
+    const doResetPasswordBtn = document.getElementById('doResetPasswordBtn')
     if (doResetPasswordBtn) {
         doResetPasswordBtn.onclick = async () => {
             const email = document.getElementById('resetEmail')?.value
@@ -337,89 +261,104 @@ export function setupAuthModals() {
         }
     }
     
-    // ========== ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ОКНАМИ ==========
+    // Переключение между окнами
+    const showRegisterFromLoginBtn = document.getElementById('showRegisterFromLoginBtn')
     if (showRegisterFromLoginBtn) {
         showRegisterFromLoginBtn.onclick = () => {
-            console.log('🔄 Переход на регистрацию')
+            hideAuthModals()
             showRegisterModal()
         }
     }
     
+    const showLoginFromRegisterBtn = document.getElementById('showLoginFromRegisterBtn')
     if (showLoginFromRegisterBtn) {
         showLoginFromRegisterBtn.onclick = () => {
-            console.log('🔄 Переход на вход')
             hideAuthModals()
             showAuthModal()
         }
     }
     
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn')
     if (forgotPasswordBtn) {
         forgotPasswordBtn.onclick = () => {
-            console.log('🔄 Переход на восстановление пароля')
+            hideAuthModals()
             showResetPasswordModal()
         }
     }
     
+    const backToLoginBtn = document.getElementById('backToLoginBtn')
     if (backToLoginBtn) {
         backToLoginBtn.onclick = () => {
-            console.log('🔄 Возврат ко входу')
             hideAuthModals()
             showAuthModal()
         }
     }
     
-    // ========== ГОСТЕВОЙ РЕЖИМ ==========
-    if (guestLoginBtn) {
-        guestLoginBtn.onclick = () => {
-            console.log('👤 Гостевой режим (из входа)')
-            handleGuestMode()
-        }
-    }
+    // ============================================================
+    // ЗАКРЫТИЕ МОДАЛЬНЫХ ОКОН (ТОЛЬКО ПО КНОПКЕ)
+    // ============================================================
     
-    if (guestRegisterBtn) {
-        guestRegisterBtn.onclick = () => {
-            console.log('👤 Гостевой режим (из регистрации)')
-            handleGuestMode()
-        }
-    }
-    
-    // ========== ЗАКРЫТИЕ МОДАЛЬНЫХ ОКОН ==========
+    const closeLoginModal = document.getElementById('closeLoginModal')
     if (closeLoginModal) {
-        closeLoginModal.onclick = hideAuthModals
-    }
-    if (closeRegisterModal) {
-        closeRegisterModal.onclick = hideAuthModals
-    }
-    if (closeResetModal) {
-        closeResetModal.onclick = hideAuthModals
+        closeLoginModal.onclick = () => {
+            console.log('🔴 Закрытие окна входа')
+            const modal = document.getElementById('loginModal')
+            if (modal) modal.classList.add('hidden')
+        }
     }
     
-    // ========== ЗАКРЫТИЕ ПО КЛИКУ НА ФОН ==========
-    const modals = ['loginModal', 'registerModal', 'resetPasswordModal']
-    modals.forEach(id => {
-        const modal = document.getElementById(id)
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) hideAuthModals()
-            })
+    const closeRegisterModal = document.getElementById('closeRegisterModal')
+    if (closeRegisterModal) {
+        closeRegisterModal.onclick = () => {
+            console.log('🔴 Закрытие окна регистрации')
+            const modal = document.getElementById('registerModal')
+            if (modal) modal.classList.add('hidden')
+        }
+    }
+    
+    const closeResetModal = document.getElementById('closeResetModal')
+    if (closeResetModal) {
+        closeResetModal.onclick = () => {
+            console.log('🔴 Закрытие окна восстановления')
+            const modal = document.getElementById('resetPasswordModal')
+            if (modal) modal.classList.add('hidden')
+        }
+    }
+    
+    // ============================================================
+    // ЗАКРЫТИЕ ПО ESC
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            console.log('🔴 ESC нажат, закрываем все окна')
+            const loginModal = document.getElementById('loginModal')
+            const registerModal = document.getElementById('registerModal')
+            const resetModal = document.getElementById('resetPasswordModal')
+            
+            if (loginModal && !loginModal.classList.contains('hidden')) loginModal.classList.add('hidden')
+            if (registerModal && !registerModal.classList.contains('hidden')) registerModal.classList.add('hidden')
+            if (resetModal && !resetModal.classList.contains('hidden')) resetModal.classList.add('hidden')
         }
     })
     
-    // ========== ENTER ДЛЯ ОТПРАВКИ ==========
-    const loginPassword = document.getElementById('loginPassword')
-    const regPassword = document.getElementById('regPassword')
+    // ============================================================
+    // ЗАКРЫТИЕ ПО КЛИКУ НА ФОН — ОТКЛЮЧЕНО
+    // ============================================================
     
+    // Enter для отправки
+    const loginPassword = document.getElementById('loginPassword')
     if (loginPassword) {
         loginPassword.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doLoginBtn?.click()
         })
     }
     
+    const regPassword = document.getElementById('regPassword')
     if (regPassword) {
         regPassword.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') doRegisterBtn?.click()
         })
     }
     
-    console.log('✅ Auth модальные окна настроены')
+    console.log('✅ Все обработчики авторизации настроены')
 }

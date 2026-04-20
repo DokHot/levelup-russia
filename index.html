@@ -46,7 +46,6 @@
             background: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
         }
         
-        /* Карточки на всю ширину */
         .task-card-container {
             width: 100% !important;
             min-width: 100% !important;
@@ -95,7 +94,6 @@
             color: #f3f4f6;
         }
         
-        /* Сетка магазина */
         #shopGrid {
             display: block !important;
             width: 100% !important;
@@ -125,7 +123,6 @@
             display: block !important;
         }
         
-        /* Эффект увеличения при наведении */
         .task-card-container {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             overflow: visible !important;
@@ -136,7 +133,6 @@
             z-index: 10;
         }
         
-        /* Центрирование содержимого */
         .task-card-front,
         .task-card-back {
             display: flex;
@@ -149,7 +145,6 @@
             text-align: center;
         }
         
-        /* ВСЕ МОДАЛЬНЫЕ ОКНА БЕЛЫЕ */
         .fixed.inset-0 > div,
         [id$="Modal"] > div:first-child,
         #loginModal > div,
@@ -175,7 +170,6 @@
             border-radius: 1rem !important;
         }
         
-        /* Текст в модальных окнах */
         [id$="Modal"] p,
         [id$="Modal"] h2,
         [id$="Modal"] h3,
@@ -185,7 +179,6 @@
             color: #1f2937 !important;
         }
         
-        /* Кнопки в модальных окнах */
         [id$="Modal"] button {
             color: white !important;
         }
@@ -195,7 +188,6 @@
             color: #1f2937 !important;
         }
         
-        /* Поля ввода в модальных окнах */
         [id$="Modal"] input,
         [id$="Modal"] textarea,
         [id$="Modal"] select {
@@ -206,7 +198,6 @@
             padding: 0.5rem !important;
         }
         
-        /* ГРУППЫ КАТЕГОРИЙ В МАГАЗИНЕ — БЕЛЫЕ */
         .category-group,
         .category-group-header,
         .category-group-content {
@@ -264,7 +255,6 @@
             flex-shrink: 0 !important;
         }
         
-        /* ЦВЕТНЫЕ ФИЛЬТРЫ СЛОЖНОСТИ */
         .diff-filter[data-diff="1"] { color: #10b981 !important; }
         .diff-filter[data-diff="2"] { color: #3b82f6 !important; }
         .diff-filter[data-diff="3"] { color: #f59e0b !important; }
@@ -274,7 +264,6 @@
         .diff-filter:not(.active) { background: #f3f4f6 !important; }
         body.dark .diff-filter:not(.active) { background: #374151 !important; }
         
-        /* Общие стили */
         .glass-card {
             background: white;
             border-radius: 0.75rem;
@@ -433,6 +422,33 @@
         
         .backface-hidden {
             backface-visibility: hidden;
+        }
+        
+        /* Исправление цвета кнопок в окнах авторизации */
+        #loginModal button,
+        #registerModal button,
+        #resetPasswordModal button {
+            color: white !important;
+        }
+        
+        #loginModal #showRegisterFromLoginBtn,
+        #loginModal #forgotPasswordBtn,
+        #registerModal #showLoginFromRegisterBtn,
+        #resetPasswordModal #backToLoginBtn {
+            color: #10b981 !important;
+        }
+        
+        #loginModal #closeLoginModal,
+        #registerModal #closeRegisterModal,
+        #resetPasswordModal #closeResetModal {
+            color: #6b7280 !important;
+            background: transparent !important;
+        }
+        
+        #loginModal #closeLoginModal:hover,
+        #registerModal #closeRegisterModal:hover,
+        #resetPasswordModal #closeResetModal:hover {
+            color: #374151 !important;
         }
     </style>
 </head>
@@ -602,57 +618,85 @@
     </div>
     
     <!-- ============================================================ -->
-    <!-- МОДАЛЬНЫЕ ОКНА АВТОРИЗАЦИИ -->
+    <!-- МОДАЛЬНОЕ ОКНО ВХОДА (без гостевого режима) -->
     <!-- ============================================================ -->
-    
-    <!-- МОДАЛЬНОЕ ОКНО ВХОДА -->
-<div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
-        <div class="text-center mb-4">
-            <div class="text-5xl mb-2">🔐</div>
-            <h2 class="text-2xl font-bold">Вход</h2>
-            <p class="text-sm text-gray-500">Войдите, чтобы синхронизировать прогресс</p>
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">📧 Email</label>
-            <input type="email" id="loginEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm font-medium mb-1">🔒 Пароль</label>
-            <input type="password" id="loginPassword" placeholder="••••••" class="w-full px-4 py-2 border rounded-lg">
-        </div>
-        <div class="text-right mb-4">
-            <button id="forgotPasswordBtn" class="text-sm text-green-600 hover:text-green-700">Забыли пароль?</button>
-        </div>
-        <button id="doLoginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
-            Войти
-        </button>
-        
-        <!-- ========== ДОБАВЛЯЕМ ПРЕДЛОЖЕНИЕ ЗАРЕГИСТРИРОВАТЬСЯ ========== -->
-        <div class="text-center mt-4">
-            <button id="showRegisterFromLoginBtn" class="text-sm text-green-600 hover:text-green-700">
-                Нет аккаунта? Зарегистрироваться
+    <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">🔐</div>
+                <h2 class="text-2xl font-bold">Вход</h2>
+                <p class="text-sm text-gray-500">Войдите, чтобы синхронизировать прогресс</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">📧 Email</label>
+                <input type="email" id="loginEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Пароль</label>
+                <input type="password" id="loginPassword" placeholder="••••••" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="text-right mb-4">
+                <button id="forgotPasswordBtn" class="text-sm text-green-600 hover:text-green-700">Забыли пароль?</button>
+            </div>
+            <button id="doLoginBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Войти
             </button>
-        </div>
-        
-        <div class="relative my-4">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
+            <div class="text-center mt-4">
+                <button id="showRegisterFromLoginBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Нет аккаунта? Зарегистрироваться
+                </button>
             </div>
-            <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-white text-gray-500">или</span>
+            <div class="text-center mt-3">
+                <button id="closeLoginModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
             </div>
-        </div>
-        <button id="guestLoginBtn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-full font-bold transition">
-            🎮 Продолжить как гость
-        </button>
-        <div class="text-center mt-3">
-            <button id="closeLoginModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
         </div>
     </div>
-</div>
     
+    <!-- ============================================================ -->
+    <!-- МОДАЛЬНОЕ ОКНО РЕГИСТРАЦИИ (без гостевого режима) -->
+    <!-- ============================================================ -->
+    <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center mb-4">
+                <div class="text-5xl mb-2">📝</div>
+                <h2 class="text-2xl font-bold">Регистрация</h2>
+                <p class="text-sm text-gray-500">Создайте аккаунт для сохранения прогресса</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">👤 Имя пользователя</label>
+                <input type="text" id="regUsername" placeholder="Как к вам обращаться?" class="w-full px-4 py-2 border rounded-lg">
+                <p class="text-xs text-gray-400 mt-1">От 3 до 20 символов, уникальное</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">📧 Email</label>
+                <input type="email" id="regEmail" placeholder="example@mail.ru" class="w-full px-4 py-2 border rounded-lg">
+                <p class="text-xs text-gray-400 mt-1">Нужен для восстановления пароля</p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Пароль</label>
+                <input type="password" id="regPassword" placeholder="минимум 6 символов" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">🔒 Подтверждение пароля</label>
+                <input type="password" id="regPasswordConfirm" placeholder="повторите пароль" class="w-full px-4 py-2 border rounded-lg">
+            </div>
+            <button id="doRegisterBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-full font-bold transition">
+                Зарегистрироваться
+            </button>
+            <div class="text-center mt-4">
+                <button id="showLoginFromRegisterBtn" class="text-sm text-green-600 hover:text-green-700">
+                    Уже есть аккаунт? Войти
+                </button>
+            </div>
+            <div class="text-center mt-3">
+                <button id="closeRegisterModal" class="text-sm text-gray-400 hover:text-gray-600">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ============================================================ -->
     <!-- МОДАЛЬНОЕ ОКНО ВОССТАНОВЛЕНИЯ ПАРОЛЯ -->
+    <!-- ============================================================ -->
     <div id="resetPasswordModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <div class="text-center mb-4">
@@ -678,7 +722,10 @@
         </div>
     </div>
     
+    <!-- ============================================================ -->
     <!-- ОСТАЛЬНЫЕ МОДАЛЬНЫЕ ОКНА (ИГРОВЫЕ) -->
+    <!-- ============================================================ -->
+    
     <div id="deadlineModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4" id="modalTaskTitle">Выберите срок</h3>

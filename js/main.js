@@ -1,6 +1,7 @@
 // js/main.js
 // ============================================================
-// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 7.6)
+// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 0.8)
+// ЖИЗНЬ В ДЕЛАХ — Твой трекер целей и свершений
 // ============================================================
 
 import { initTasks, TASKS_DB } from './tasks.js';
@@ -10,7 +11,9 @@ import {
     initFreePet, updateLastLogin, getUsername, hasOldPhotos, migrateOldPhotos
 } from './user.js';
 import { loadSettings, saveSettings } from './storage.js';
-import { renderShop, initDifficultyFilters, renderCategoryFilters } from './shop.js';
+import { renderMyTasks } from './myTasks.js';
+import { renderPackages } from './packageManager.js';
+import { renderStatistics } from './statistics.js';
 import { renderAvatars, changeBackground } from './avatars.js';
 import { renderBoosters, startBoosterTimers, confirmBoosterPurchase } from './boosters.js';
 import { renderActiveTasks, confirmSurrender, confirmSkip, openActiveTaskDetail } from './activeTasks.js';
@@ -30,7 +33,7 @@ import { getCategoryColor } from './config.js';
 import { renderPetRoom } from './petRoom.js';
 import { startPetTimers, getPetBonus, checkFreePetAfterEscape } from './pets.js';
 import { checkAndShowAuth } from './auth.js';
-import { THEMES, saveThemeSettings, resetToDefault } from './settings.js';
+import { THEMES, saveThemeSettings, resetToDefault, renderSettingsModal } from './settings.js';
 import { renderFriends } from './social/friends.js';
 import { renderLeaderboard } from './social/leaderboard.js';
 import { renderSearch } from './social/search.js';
@@ -41,6 +44,22 @@ import { initCloudPhotoStorage } from './cloud/cloudPhotoStorage.js';
 import { lazyLoad, preloadModule, prefetchResources } from './performance/lazyLoader.js';
 import { forceSync, getSyncStatus } from './backgroundSync.js';
 import { initAuth, setupAuthModals } from './authSystem.js';
+import { renderUnifiedShop } from './shopUnified.js';
+// ============================================================
+// 🆕 ИМПОРТ УВЕДОМЛЕНИЙ
+// ============================================================
+import { 
+    initNotifications, 
+    sendUrgentNotification, 
+    sendTaskCompleteNotification,
+    sendAchievementNotification,
+    sendLevelUpNotification,
+    sendLocalNotification,
+    showTestNotification,
+    isPushSupported,
+    getNotificationPermission,
+    requestNotificationPermission
+} from './notifications.js';
 
 // ============================================================
 // ПЕРЕМЕННЫЕ
@@ -50,61 +69,61 @@ let currentTab = null;
 let currentTheme = 'light';
 let isInitialized = false;
 
-// Кэш для отслеживания уже отрисованных вкладок (ленивая загрузка)
+// Кэш для отслеживания уже отрисованных вкладок
 const tabRendered = {
+    myTasks: false,
     shop: false,
-    active: false,
-    history: false,
-    achievements: false,
-    random: false,
-    calendar: false,
-    map: false,
-    photos: false,
+    packages: false,
+    statistics: false,
     pet: false,
-    friends: false,
-    leaderboard: false,
-    search: false,
-    about: false
+    settings: false
 };
 
-// Карта ленивых модулей
+// Карта ленивых модулей для скрытых вкладок
 const LAZY_MODULES = {
     map: () => import('./map.js'),
     photos: () => import('./photos.js'),
     friends: () => import('./social/friends.js'),
     leaderboard: () => import('./social/leaderboard.js'),
     search: () => import('./social/search.js'),
-    about: () => import('./about.js')
+    about: () => import('./about.js'),
+    achievements: () => import('./achievements.js'),
+    random: () => import('./randomQuest.js'),
+    calendar: () => import('./calendar.js')
 };
 
-// Предзагрузка вероятных следующих вкладок
-const PREFETCH_ORDER = ['active', 'history', 'pet'];
+// Предзагрузка следующих вкладок
+const PREFETCH_ORDER = ['shop', 'packages', 'statistics', 'pet'];
 
 // ============================================================
-// НАВИГАЦИЯ (с выпадающим меню и ленивой загрузкой)
+// НАВИГАЦИЯ
 // ============================================================
 
 window.switchTab = async function(tabName) {
-    console.log('Switching to tab:', tabName);
+    console.log('🔄 Переключение на вкладку:', tabName);
     
+    // Список всех основных вкладок и их кнопок
     const tabButtons = {
+        myTasks: document.getElementById('tabMyTasks'),
         shop: document.getElementById('tabShop'),
-        active: document.getElementById('tabActive'),
-        history: document.getElementById('tabHistory'),
-        achievements: document.getElementById('tabAchievements'),
-        random: document.getElementById('tabRandom'),
-        calendar: document.getElementById('tabCalendar'),
-        map: document.getElementById('tabMap'),
-        photos: document.getElementById('tabPhotos'),
+        packages: document.getElementById('tabPackages'),
+        statistics: document.getElementById('tabStatistics'),
         pet: document.getElementById('tabPet'),
-        friends: document.getElementById('tabFriends'),
-        leaderboard: document.getElementById('tabLeaderboard'),
-        search: document.getElementById('tabSearch'),
-        about: document.getElementById('tabAbout')
+        settings: document.getElementById('tabSettings')
     };
     
     const views = {
+        myTasks: document.getElementById('myTasksView'),
         shop: document.getElementById('shopView'),
+        packages: document.getElementById('packagesView'),
+        statistics: document.getElementById('statisticsView'),
+        pet: document.getElementById('petView'),
+        settings: document.getElementById('settingsView')
+    };
+    
+    // Скрытые вкладки (доступны через настройки)
+    const hiddenViews = {
+        shopGrid: document.getElementById('shopGrid'),
         active: document.getElementById('activeView'),
         history: document.getElementById('historyView'),
         achievements: document.getElementById('achievementsView'),
@@ -112,25 +131,33 @@ window.switchTab = async function(tabName) {
         calendar: document.getElementById('calendarView'),
         map: document.getElementById('mapView'),
         photos: document.getElementById('photosView'),
-        pet: document.getElementById('petView'),
         friends: document.getElementById('friendsView'),
         leaderboard: document.getElementById('leaderboardView'),
         search: document.getElementById('searchView'),
         about: document.getElementById('aboutView')
     };
     
+    // Скрываем все кнопки вкладок
     Object.values(tabButtons).forEach(btn => {
         if (btn) btn.classList.remove('active');
     });
     
+    // Скрываем все основные вкладки
     Object.values(views).forEach(view => {
         if (view) view.classList.add('hidden');
     });
     
+    // Скрываем все скрытые вкладки
+    Object.values(hiddenViews).forEach(view => {
+        if (view) view.classList.add('hidden');
+    });
+    
+    // Показываем выбранную вкладку
     if (views[tabName]) {
         views[tabName].classList.remove('hidden');
     }
     
+    // Активируем кнопку
     if (tabButtons[tabName]) {
         tabButtons[tabName].classList.add('active');
     }
@@ -138,6 +165,7 @@ window.switchTab = async function(tabName) {
     currentTab = tabName;
     prefetchNextTab(tabName);
     
+    // Рендерим содержимое вкладки
     if (!tabRendered[tabName]) {
         await renderTabContent(tabName);
         tabRendered[tabName] = true;
@@ -146,67 +174,92 @@ window.switchTab = async function(tabName) {
     }
 };
 
+// ============================================================
+// РЕНДЕР ВКЛАДОК
+// ============================================================
+
 async function renderTabContent(tabName) {
-    console.log(`Loading tab: ${tabName}`);
+    console.log(`📦 Загрузка вкладки: ${tabName}`);
     
     switch (tabName) {
+        case 'myTasks':
+            renderMyTasks();
+            break;
+            
         case 'shop':
             const shopView = document.getElementById('shopView');
-            if (shopView && !shopView.querySelector('#shopGrid')) {
-                shopView.innerHTML = `
-                    <div class="shop-filters mb-4">
-                        <div class="flex gap-2 mb-4 flex-wrap">
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="all">Все</button>
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="1">★</button>
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="2">★★</button>
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="3">★★★</button>
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="4">★★★★</button>
-                            <button class="diff-filter bg-gray-200 px-4 py-2 rounded-full text-sm" data-diff="5">★★★★★</button>
-                        </div>
-                        <div id="categoryGroupsList" class="mb-4"></div>
-                    </div>
-                    <div id="shopGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-                `;
-                renderCategoryFilters();
-                initDifficultyFilters();
+            if (shopView) {
+                shopView.innerHTML = '';
+                renderUnifiedShop();
+                shopView.classList.remove('hidden');
             }
-            renderShop();
-            renderAvatars();
-            renderBoosters();
+            break;
+            
+        case 'packages':
+            renderPackages();
+            break;
+            
+        case 'statistics':
+            renderStatistics();
+            break;
+            
+        case 'pet':
+            renderPetRoom();
+            break;
+            
+        case 'settings':
+            renderSettingsTab();
+            break;
+            
+        // Скрытые вкладки (для обратной совместимости)
+        case 'shopGrid':
+            const shopGridView = document.getElementById('shopGrid');
+            if (shopGridView) {
+                const { renderShop } = await import('./shop.js');
+                shopGridView.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>';
+                renderShop();
+                shopGridView.classList.remove('hidden');
+            }
             break;
             
         case 'active':
             const activeView = document.getElementById('activeView');
-            if (activeView && !activeView.querySelector('#activeTasksGrid')) {
-                activeView.innerHTML = `<div id="activeTasksGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>`;
+            if (activeView) {
+                activeView.innerHTML = '<div id="activeTasksGrid"></div>';
+                renderActiveTasks();
+                activeView.classList.remove('hidden');
             }
-            renderActiveTasks();
             break;
             
         case 'history':
             const historyView = document.getElementById('historyView');
-            if (historyView && !historyView.querySelector('#historyGrid')) {
-                historyView.innerHTML = `<div id="historyGrid" class="space-y-3"></div>`;
+            if (historyView) {
+                historyView.innerHTML = '<div id="historyGrid"></div>';
+                renderHistory();
+                historyView.classList.remove('hidden');
             }
-            renderHistory();
             break;
             
         case 'achievements':
-            renderAchievements();
+            const achView = document.getElementById('achievementsView');
+            if (achView) {
+                renderAchievements();
+                achView.classList.remove('hidden');
+            }
             break;
             
         case 'random':
-            const randomView = document.getElementById('randomView');
-            if (randomView && !randomView.querySelector('#randomQuestContainer')) {
-                randomView.innerHTML = `<div id="randomQuestContainer" class="max-w-md mx-auto"></div>`;
+            const randView = document.getElementById('randomView');
+            if (randView) {
+                initRandomQuest();
+                randView.classList.remove('hidden');
             }
-            initRandomQuest();
             break;
             
         case 'calendar':
-            const calendarView = document.getElementById('calendarView');
-            if (calendarView && !calendarView.querySelector('#calendarGrid')) {
-                calendarView.innerHTML = `
+            const calView = document.getElementById('calendarView');
+            if (calView) {
+                calView.innerHTML = `
                     <div class="max-w-md mx-auto">
                         <div class="text-center mb-4">
                             <div class="text-2xl font-bold" id="currentMonthYear"></div>
@@ -215,34 +268,33 @@ async function renderTabContent(tabName) {
                         <div class="text-center mt-4 text-sm text-gray-500" id="superPrizeStatus"></div>
                     </div>
                 `;
+                setTimeout(() => initCalendar(), 50);
+                calView.classList.remove('hidden');
             }
-            setTimeout(() => initCalendar(), 10);
             break;
             
         case 'map':
             const mapView = document.getElementById('mapView');
-            if (mapView && !mapView.querySelector('#globalMap')) {
-                mapView.innerHTML = `<div id="globalMap" style="height: 500px; width: 100%; border-radius: 16px;"></div>`;
+            if (mapView) {
+                const { renderMap } = await LAZY_MODULES.map();
+                mapView.innerHTML = '<div id="globalMap" style="height: 500px;"></div>';
+                setTimeout(() => renderMap(), 50);
+                mapView.classList.remove('hidden');
             }
-            const { renderMap } = await LAZY_MODULES.map();
-            setTimeout(() => renderMap(), 10);
             break;
             
         case 'photos':
             const photosView = document.getElementById('photosView');
-            if (photosView && !photosView.querySelector('#photosGrid')) {
-                photosView.innerHTML = `<div id="photosGrid" class="photos-grid"></div>`;
+            if (photosView) {
+                photosView.innerHTML = '<div id="photosGrid"></div>';
+                await renderPhotos();
+                photosView.classList.remove('hidden');
             }
-            await renderPhotos();
-            break;
-            
-        case 'pet':
-            renderPetRoom();
             break;
             
         case 'friends':
             const friendsView = document.getElementById('friendsView');
-            if (friendsView && !friendsView.querySelector('#friendsList')) {
+            if (friendsView) {
                 friendsView.innerHTML = `
                     <div class="max-w-2xl mx-auto">
                         <div class="mb-4">
@@ -256,14 +308,15 @@ async function renderTabContent(tabName) {
                         </div>
                     </div>
                 `;
+                renderFriends();
+                friendsView.classList.remove('hidden');
             }
-            renderFriends();
             break;
             
         case 'leaderboard':
-            const leaderboardView = document.getElementById('leaderboardView');
-            if (leaderboardView && !leaderboardView.querySelector('#leaderboardTabs')) {
-                leaderboardView.innerHTML = `
+            const lbView = document.getElementById('leaderboardView');
+            if (lbView) {
+                lbView.innerHTML = `
                     <div class="max-w-2xl mx-auto">
                         <div class="flex gap-2 mb-4 border-b pb-2">
                             <button class="leaderboard-tab px-4 py-2 rounded-lg bg-gray-200" data-category="level">🏆 Уровень</button>
@@ -275,148 +328,349 @@ async function renderTabContent(tabName) {
                         <div id="leaderboardList" class="space-y-2"></div>
                     </div>
                 `;
+                renderLeaderboard();
+                lbView.classList.remove('hidden');
             }
-            renderLeaderboard();
             break;
             
         case 'search':
-            renderSearch();
+            const searchView = document.getElementById('searchView');
+            if (searchView) {
+                renderSearch();
+                searchView.classList.remove('hidden');
+            }
             break;
             
         case 'about':
-            renderAbout();
-            break;
-            
-        case 'settings':
-            const settingsView = document.getElementById('settingsView');
-            if (settingsView) {
-                const { renderSettings } = await import('./settings.js');
-                renderSettings();
+            const aboutView = document.getElementById('aboutView');
+            if (aboutView) {
+                renderAbout();
+                aboutView.classList.remove('hidden');
             }
             break;
     }
 }
 
+// ============================================================
+// ОБНОВЛЕНИЕ ВКЛАДОК
+// ============================================================
+
 function refreshTabContent(tabName) {
     switch (tabName) {
-        case 'active': renderActiveTasks(); break;
-        case 'history': renderHistory(); break;
-        case 'shop': renderShop(); break;
-        case 'photos': renderPhotos(); break;
-        case 'pet': renderPetRoom(); break;
-        case 'friends': renderFriends(); break;
-        case 'leaderboard': renderLeaderboard(); break;
+        case 'myTasks':
+            renderMyTasks();
+            break;
+        case 'shop':
+            renderUnifiedShop();
+            break;
+        case 'packages':
+            renderPackages();
+            break;
+        case 'statistics':
+            renderStatistics();
+            break;
+        case 'pet':
+            renderPetRoom();
+            break;
+        case 'settings':
+            renderSettingsTab();
+            break;
     }
 }
+
+// ============================================================
+// ОТДЕЛЬНАЯ ФУНКЦИЯ ДЛЯ НАСТРОЕК (ПОЛНАЯ ВЕРСИЯ)
+// ============================================================
+
+function renderSettingsTab() {
+    const settingsView = document.getElementById('settingsView');
+    if (!settingsView) {
+        console.warn('settingsView not found');
+        return;
+    }
+    
+    settingsView.classList.remove('hidden');
+    
+    // Получаем текущие настройки
+    const currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
+    const currentBg = user.currentBackground || 'default';
+    const isCloudEnabled = user.photos?.cloudEnabled || false;
+    const username = getUsername();
+    const level = getCurrentLevel();
+    
+    // Статус уведомлений
+    const notificationStatus = getNotificationPermission();
+    const isPushSupportedBrowser = isPushSupported();
+    
+    settingsView.innerHTML = `
+        <div class="max-w-3xl mx-auto">
+            <!-- Заголовок -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-5">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">⚙️</span>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200">Настройки</h2>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Управление приложением и синхронизация</p>
+                        <div class="flex items-center gap-3 mt-1 text-xs text-gray-400 dark:text-gray-500">
+                            <span>👤 ${username}</span>
+                            <span>•</span>
+                            <span>🏆 Уровень ${level.level}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Тема -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">🎨 Оформление</h3>
+                <div class="flex flex-wrap gap-3">
+                    <button id="themeLightBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${currentTheme === 'light' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+                        ☀️ Светлая
+                    </button>
+                    <button id="themeDarkBtn" class="px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${currentTheme === 'dark' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+                        🌙 Тёмная
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Фоны -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">🖼️ Фоны</h3>
+                <div class="flex flex-wrap gap-3">
+                    <button id="bgDefaultBtn" class="px-4 py-2 rounded-xl text-sm transition-all ${currentBg === 'default' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+                        🏠 Стандартный
+                    </button>
+                    <button id="bgForestBtn" class="px-4 py-2 rounded-xl text-sm transition-all ${currentBg === 'forest' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+                        🌲 Лесной
+                    </button>
+                    <button id="bgCosmicBtn" class="px-4 py-2 rounded-xl text-sm transition-all ${currentBg === 'cosmic' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+                        🌌 Космос
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ============================================================ -->
+            <!-- 🆕 УВЕДОМЛЕНИЯ -->
+            <!-- ============================================================ -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">🔔 Уведомления</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Статус</span>
+                        <span class="text-sm ${notificationStatus === 'granted' ? 'text-green-600' : notificationStatus === 'denied' ? 'text-red-600' : 'text-yellow-600'}">
+                            ${notificationStatus === 'granted' ? '✅ Разрешены' : notificationStatus === 'denied' ? '❌ Запрещены' : '⬜ Не настроены'}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Поддержка браузера</span>
+                        <span class="text-sm ${isPushSupportedBrowser ? 'text-green-600' : 'text-red-600'}">
+                            ${isPushSupportedBrowser ? '✅ Поддерживается' : '❌ Не поддерживается'}
+                        </span>
+                    </div>
+                    ${isPushSupportedBrowser ? `
+                        <button id="enableNotificationsBtn" class="w-full px-4 py-2.5 ${notificationStatus === 'granted' ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'} text-white rounded-xl text-sm transition">
+                            ${notificationStatus === 'granted' ? '✅ Уведомления включены' : '🔔 Включить уведомления'}
+                        </button>
+                    ` : `
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-xl text-sm text-yellow-800 dark:text-yellow-200">
+                            ⚠️ Ваш браузер не поддерживает push-уведомления. Используйте Chrome, Firefox или Edge.
+                        </div>
+                    `}
+                    ${notificationStatus === 'granted' ? `
+                        <button id="testNotificationBtn" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm transition">
+                            📨 Отправить тестовое уведомление
+                        </button>
+                    ` : ''}
+                    <div class="text-xs text-gray-400 mt-2">
+                        💡 Уведомления приходят о срочных делах, достижениях, повышении уровня и напоминаниях.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Синхронизация -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">☁️ Синхронизация</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Статус</span>
+                        <span class="text-sm ${isCloudEnabled ? 'text-green-600' : 'text-gray-400'}">
+                            ${isCloudEnabled ? '✅ Подключено' : '⬜ Не подключено'}
+                        </span>
+                    </div>
+                    <button id="syncNowBtn" class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm transition">
+                        🔄 Синхронизировать сейчас
+                    </button>
+                    <button id="connectCloudBtn" class="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm transition">
+                        ☁️ Подключить облако
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Данные -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">💾 Данные</h3>
+                <div class="flex flex-wrap gap-3">
+                    <button id="exportBtnSettings" class="flex-1 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm transition">
+                        📦 Экспорт
+                    </button>
+                    <button id="importBtnSettings" class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm transition">
+                        📥 Импорт
+                    </button>
+                    <button id="resetBtnSettings" class="w-full px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm transition mt-2">
+                        ⚠️ Сбросить прогресс
+                    </button>
+                </div>
+            </div>
+            
+            <!-- О проекте -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-2">📋 О проекте</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Жизнь в делах · Версия 0.8</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Твой трекер целей и свершений</p>
+                <button id="aboutBtnSettings" class="mt-3 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 transition">
+                    📜 Подробнее
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // ============================================================
+    // ОБРАБОТЧИКИ
+    // ============================================================
+    
+    // Тема
+    document.getElementById('themeLightBtn')?.addEventListener('click', () => {
+        document.body.classList.remove('dark');
+        document.body.classList.add('light');
+        saveSettings({ theme: 'light' });
+        renderSettingsTab();
+        showToast('☀️ Светлая тема', 'success');
+    });
+    
+    document.getElementById('themeDarkBtn')?.addEventListener('click', () => {
+        document.body.classList.add('dark');
+        document.body.classList.remove('light');
+        saveSettings({ theme: 'dark' });
+        renderSettingsTab();
+        showToast('🌙 Тёмная тема', 'success');
+    });
+    
+    // Фоны
+    document.getElementById('bgDefaultBtn')?.addEventListener('click', () => {
+        changeBackground('default');
+        renderSettingsTab();
+    });
+    
+    document.getElementById('bgForestBtn')?.addEventListener('click', () => {
+        changeBackground('forest');
+        renderSettingsTab();
+    });
+    
+    document.getElementById('bgCosmicBtn')?.addEventListener('click', () => {
+        changeBackground('cosmic');
+        renderSettingsTab();
+    });
+    
+    // ============================================================
+    // 🆕 УВЕДОМЛЕНИЯ — ОБРАБОТЧИКИ
+    // ============================================================
+    document.getElementById('enableNotificationsBtn')?.addEventListener('click', async () => {
+        if (notificationStatus === 'granted') {
+            showToast('✅ Уведомления уже разрешены', 'info');
+            return;
+        }
+        
+        if (!isPushSupportedBrowser) {
+            showToast('❌ Ваш браузер не поддерживает push-уведомления', 'error');
+            return;
+        }
+        
+        const result = await requestNotificationPermission();
+        if (result) {
+            renderSettingsTab();
+            showToast('✅ Уведомления включены!', 'success');
+            
+            // Отправляем тестовое уведомление
+            setTimeout(async () => {
+                await showTestNotification();
+            }, 1000);
+        }
+    });
+    
+    document.getElementById('testNotificationBtn')?.addEventListener('click', async () => {
+        if (notificationStatus !== 'granted') {
+            showToast('❌ Сначала разрешите уведомления', 'error');
+            return;
+        }
+        
+        await showTestNotification();
+        showToast('📨 Тестовое уведомление отправлено!', 'success');
+    });
+    
+    // Синхронизация
+    document.getElementById('syncNowBtn')?.addEventListener('click', async () => {
+        showToast('🔄 Синхронизация...', 'info');
+        try {
+            const { saveUserToCloud } = await import('./supabase-client.js');
+            await saveUserToCloud(user);
+            showToast('✅ Синхронизация завершена!', 'success');
+        } catch (e) {
+            showToast('❌ Ошибка синхронизации', 'error');
+        }
+    });
+    
+    document.getElementById('connectCloudBtn')?.addEventListener('click', () => {
+        showToast('☁️ Функция в разработке', 'info');
+    });
+    
+    // Данные
+    document.getElementById('exportBtnSettings')?.addEventListener('click', exportData);
+    document.getElementById('importBtnSettings')?.addEventListener('click', importProgress);
+    document.getElementById('resetBtnSettings')?.addEventListener('click', resetProgress);
+    
+    // О проекте
+    document.getElementById('aboutBtnSettings')?.addEventListener('click', () => {
+        window.switchTab('about');
+    });
+}
+
+// ============================================================
+// ПРЕДЗАГРУЗКА
+// ============================================================
 
 function prefetchNextTab(currentTab) {
     const nextIndex = PREFETCH_ORDER.indexOf(currentTab) + 1;
     if (nextIndex < PREFETCH_ORDER.length) {
         const nextTab = PREFETCH_ORDER[nextIndex];
-        if (!tabRendered[nextTab] && LAZY_MODULES[nextTab]) {
+        if (!tabRendered[nextTab]) {
             setTimeout(() => {
-                console.log(`Prefetching: ${nextTab}`);
-                preloadModule(nextTab, LAZY_MODULES[nextTab], 2);
+                console.log(`🔮 Предзагрузка: ${nextTab}`);
             }, 1000);
         }
     }
 }
 
 // ============================================================
-// ИНИЦИАЛИЗАЦИЯ ВКЛАДОК
+// НАСТРОЙКА НАВИГАЦИИ
 // ============================================================
-
-function initShopTabs() {
-    const tabs = document.querySelectorAll('.shop-tab');
-    const sections = {
-        tasks: document.getElementById('shopTasksSection'),
-        avatars: document.getElementById('shopAvatarsSection'),
-        boosters: document.getElementById('shopBoostersSection'),
-        dlc: document.getElementById('shopDLCSection')
-    };
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const section = tab.dataset.section;
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            Object.values(sections).forEach(s => { if (s) s.classList.add('hidden'); });
-            if (sections[section]) sections[section].classList.remove('hidden');
-            if (section === 'avatars') renderAvatars();
-            else if (section === 'boosters') renderBoosters();
-            else if (section === 'tasks') renderShop();
-        });
-    });
-}
 
 function setupTabNavigation() {
     const tabButtons = {
+        myTasks: document.getElementById('tabMyTasks'),
         shop: document.getElementById('tabShop'),
-        active: document.getElementById('tabActive'),
-        history: document.getElementById('tabHistory'),
-        achievements: document.getElementById('tabAchievements'),
-        random: document.getElementById('tabRandom'),
-        calendar: document.getElementById('tabCalendar'),
-        map: document.getElementById('tabMap'),
-        photos: document.getElementById('tabPhotos'),
+        packages: document.getElementById('tabPackages'),
+        statistics: document.getElementById('tabStatistics'),
         pet: document.getElementById('tabPet'),
-        friends: document.getElementById('tabFriends'),
-        leaderboard: document.getElementById('tabLeaderboard'),
-        search: document.getElementById('tabSearch'),
-        about: document.getElementById('tabAbout')
+        settings: document.getElementById('tabSettings')
     };
     
     for (const [key, btn] of Object.entries(tabButtons)) {
         if (btn) {
             btn.onclick = () => {
-                closeDropdown();
                 window.switchTab(key);
             };
         }
     }
-}
-
-function setupDropdownMenu() {
-    const moreTabsBtn = document.getElementById('moreTabsBtn');
-    const moreTabsDropdown = document.getElementById('moreTabsDropdown');
-    
-    if (!moreTabsBtn || !moreTabsDropdown) return;
-    
-    moreTabsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        moreTabsDropdown.classList.toggle('hidden');
-    });
-    
-    document.addEventListener('click', (e) => {
-        if (!moreTabsBtn.contains(e.target) && !moreTabsDropdown.contains(e.target)) {
-            moreTabsDropdown.classList.add('hidden');
-        }
-    });
-    
-    const dropdownBtns = {
-        history: document.getElementById('tabHistory'),
-        achievements: document.getElementById('tabAchievements'),
-        random: document.getElementById('tabRandom'),
-        calendar: document.getElementById('tabCalendar'),
-        map: document.getElementById('tabMap'),
-        photos: document.getElementById('tabPhotos'),
-        search: document.getElementById('tabSearch'),
-        about: document.getElementById('tabAbout')
-    };
-    
-    for (const [key, btn] of Object.entries(dropdownBtns)) {
-        if (btn) {
-            btn.onclick = () => {
-                moreTabsDropdown.classList.add('hidden');
-                window.switchTab(key);
-            };
-        }
-    }
-}
-
-function closeDropdown() {
-    const dropdown = document.getElementById('moreTabsDropdown');
-    if (dropdown) dropdown.classList.add('hidden');
 }
 
 // ============================================================
@@ -474,132 +728,17 @@ function exportData() {
         tasks: TASKS_DB,
         user: user,
         settings: { theme: currentTheme },
+        packages: localStorage.getItem('life_in_deeds_packages'),
         exportDate: new Date().toISOString(),
-        version: '7.6'
+        version: '0.8'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `russia1000_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `life_in_deeds_backup_${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(link.href);
     showToast('📦 Данные экспортированы', 'success');
-}
-
-// ============================================================
-// ОТКРЫТИЕ ДЕТАЛЕЙ ЗАДАНИЯ
-// ============================================================
-
-function openTaskDetail(id) {
-    const task = TASKS_DB.find(t => t.id === id);
-    if (!task) return;
-    
-    const categoryColor = getCategoryColor(task.category);
-    const header = document.getElementById('detailHeader');
-    if (header) header.style.background = `linear-gradient(135deg, ${categoryColor}, ${categoryColor}cc)`;
-    
-    document.getElementById('detailCategoryBadge').innerHTML = task.category;
-    document.getElementById('detailTitle').innerHTML = escapeHtml(task.text);
-    
-    document.getElementById('detailContent').innerHTML = `
-        <div class="space-y-4">
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <div class="text-xs text-gray-500 uppercase mb-2">⭐ Сложность</div>
-                <div class="text-2xl font-bold difficulty-${task.difficulty}">${"★".repeat(task.difficulty)}</div>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <div class="text-xs text-gray-500 uppercase mb-2">💰 Цена и награда</div>
-                <div class="flex justify-between flex-wrap gap-2">
-                    <span>💰 Цена: ${task.price} монет</span>
-                    <span>🎁 Награда: ${task.baseReward} монет</span>
-                    <span>⭐ Опыт: +${task.baseXP} XP</span>
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-4">
-                <button id="detailCloseBtn" class="px-4 py-2 bg-gray-100 rounded-full">Закрыть</button>
-                <button id="detailPurchaseBtn" class="px-4 py-2 text-white rounded-full" style="background: ${categoryColor};">💰 Купить</button>
-            </div>
-        </div>
-    `;
-    
-    showModal('detailModal');
-    
-    document.getElementById('detailCloseBtn').onclick = () => hideModal('detailModal');
-    document.getElementById('detailPurchaseBtn').onclick = () => {
-        hideModal('detailModal');
-        import('./shop.js').then(m => m.purchaseTask(task));
-    };
-}
-
-// ============================================================
-// ФУНКЦИИ ДЛЯ МОДАЛЬНЫХ ОКОН ПРОФИЛЯ И НАСТРОЕК (СТАРЫЕ)
-// ============================================================
-
-function renderProfileModal() {
-    const container = document.getElementById('profileModalContent');
-    if (!container) return;
-    
-    const username = getUsername();
-    const level = getCurrentLevel();
-    const totalTasks = TASKS_DB.length;
-    const completedTasks = user.stats.tasksCompleted;
-    const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    const achievementsCount = user.achievements.length + Object.keys(user.categoryAchievements).length + (user.secretAchievements || []).filter(a => a.completed).length;
-    
-    container.innerHTML = `
-        <div class="space-y-4">
-            <div class="text-center">
-                <div class="text-6xl mb-2">${user.currentAvatar || '🏆'}</div>
-                <h2 class="text-2xl font-bold">${escapeHtml(username)}</h2>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="text-center p-3 bg-gray-50 rounded-xl"><div class="text-2xl font-bold text-green-600">${completedTasks}</div><div class="text-xs">Выполнено дел</div><div class="text-xs text-gray-400">${completionPercent}%</div></div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl"><div class="text-2xl font-bold text-blue-600">${user.level}</div><div class="text-xs">Уровень</div><div class="text-xs text-gray-400">${level.title}</div></div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl"><div class="text-2xl font-bold text-yellow-600">${achievementsCount}</div><div class="text-xs">Достижений</div></div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl"><div class="text-2xl font-bold text-purple-600">${user.coins}</div><div class="text-xs">Монет</div></div>
-            </div>
-            <div class="flex gap-3">
-                <button id="exportFromModal" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-full">📤 Экспорт</button>
-                <button id="importFromModal" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-full">📥 Импорт</button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('exportFromModal')?.addEventListener('click', exportData);
-    document.getElementById('importFromModal')?.addEventListener('click', importProgress);
-}
-
-function renderSettingsModal() {
-    const container = document.getElementById('settingsModalContent');
-    if (!container) return;
-    
-    container.innerHTML = `
-        <div class="space-y-4">
-            <div>
-                <h3 class="text-lg font-bold mb-2">🎨 Тема</h3>
-                <div class="flex gap-2">
-                    <button id="themeLightBtn" class="px-4 py-2 rounded-full ${currentTheme === 'light' ? 'bg-green-600 text-white' : 'bg-gray-200'}">☀️ Светлая</button>
-                    <button id="themeDarkBtn" class="px-4 py-2 rounded-full ${currentTheme === 'dark' ? 'bg-green-600 text-white' : 'bg-gray-200'}">🌙 Тёмная</button>
-                </div>
-            </div>
-            <div>
-                <h3 class="text-lg font-bold mb-2">🎨 Фоны</h3>
-                <div class="flex gap-2">
-                    <button id="bgDefaultBtnModal" class="px-4 py-2 rounded-full bg-gray-200">🏠 Стандартный</button>
-                    <button id="bgForestBtnModal" class="px-4 py-2 rounded-full bg-gray-200">🌲 Лесной</button>
-                    <button id="bgCosmicBtnModal" class="px-4 py-2 rounded-full bg-gray-200">🌌 Космос</button>
-                </div>
-            </div>
-            <button id="resetSettingsBtn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-full">🔄 Сбросить настройки</button>
-        </div>
-    `;
-    
-    document.getElementById('themeLightBtn')?.addEventListener('click', () => { currentTheme = 'light'; applyTheme(); saveSettings({ theme: currentTheme }); renderSettingsModal(); });
-    document.getElementById('themeDarkBtn')?.addEventListener('click', () => { currentTheme = 'dark'; applyTheme(); saveSettings({ theme: currentTheme }); renderSettingsModal(); });
-    document.getElementById('bgDefaultBtnModal')?.addEventListener('click', () => changeBackground('default'));
-    document.getElementById('bgForestBtnModal')?.addEventListener('click', () => changeBackground('forest'));
-    document.getElementById('bgCosmicBtnModal')?.addEventListener('click', () => changeBackground('cosmic'));
-    document.getElementById('resetSettingsBtn')?.addEventListener('click', () => { resetToDefault(); renderSettingsModal(); });
 }
 
 function importProgress() {
@@ -622,6 +761,9 @@ function importProgress() {
                     user.account.username = currentUsername;
                     if (!user.photos || !user.photos.items) {
                         user.photos = { cloudEnabled: false, provider: null, syncEnabled: true, autoSync: true, cacheOnDevice: true, lastSyncAt: null, items: [] };
+                    }
+                    if (data.packages) {
+                        localStorage.setItem('life_in_deeds_packages', data.packages);
                     }
                     saveUserData();
                     showToast('✅ Прогресс восстановлен! Перезагрузите страницу', 'success');
@@ -659,13 +801,41 @@ function setupEventListeners() {
                 return;
             }
             const random = available[Math.floor(Math.random() * available.length)];
-            openTaskDetail(random.id);
+            const categoryColor = getCategoryColor(random.category);
+            const header = document.getElementById('detailHeader');
+            if (header) header.style.background = `linear-gradient(135deg, ${categoryColor}, ${categoryColor}cc)`;
+            document.getElementById('detailCategoryBadge').innerHTML = random.category;
+            document.getElementById('detailTitle').innerHTML = escapeHtml(random.text);
+            document.getElementById('detailContent').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">⭐ Сложность</div>
+                        <div class="text-2xl font-bold difficulty-${random.difficulty}">${"★".repeat(random.difficulty)}</div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-2">💰 Цена и награда</div>
+                        <div class="flex justify-between flex-wrap gap-2 text-gray-800 dark:text-gray-200">
+                            <span>💰 Цена: <strong>${random.price}</strong> монет</span>
+                            <span>🎁 Награда: <strong class="text-green-600">${random.baseReward}</strong> монет</span>
+                            <span>⭐ Опыт: <strong>+${random.baseXP}</strong> XP</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button id="detailCloseBtn" class="px-5 py-2.5 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-xl text-gray-800 dark:text-gray-200 transition">Закрыть</button>
+                        <button id="detailPurchaseBtn" class="px-5 py-2.5 text-white rounded-xl transition hover:scale-105" style="background: ${categoryColor};">💰 Купить</button>
+                    </div>
+                </div>
+            `;
+            showModal('detailModal');
+            document.getElementById('detailCloseBtn').onclick = () => hideModal('detailModal');
+            document.getElementById('detailPurchaseBtn').onclick = () => {
+                hideModal('detailModal');
+                import('./myTasks.js').then(m => m.purchaseTask(random));
+            };
         };
     }
     
-    // ============================================================
-    // КНОПКА ПРОФИЛЯ
-    // ============================================================
+    // Кнопка профиля
     const headerProfileBtn = document.getElementById('headerProfileBtn');
     if (headerProfileBtn) {
         headerProfileBtn.onclick = async () => {
@@ -674,44 +844,18 @@ function setupEventListeners() {
         };
     }
     
-    // ============================================================
-    // КНОПКА НАСТРОЕК
-    // ============================================================
+    // Кнопка настроек (запасной вариант)
     const headerSettingsBtn = document.getElementById('headerSettingsBtn');
     if (headerSettingsBtn) {
-        headerSettingsBtn.onclick = async () => {
-            const { openSettingsModal } = await import('./settings.js');
-            if (typeof openSettingsModal === 'function') {
-                openSettingsModal();
-            } else {
-                const { renderSettingsModal } = await import('./settings.js');
-                if (renderSettingsModal) renderSettingsModal();
-                const settingsModal = document.getElementById('settingsModal');
-                if (settingsModal) settingsModal.classList.remove('hidden');
-            }
+        headerSettingsBtn.onclick = () => {
+            window.switchTab('settings');
         };
     }
     
-    const closeProfileModal = document.getElementById('closeProfileModal');
-    const closeSettingsModal = document.getElementById('closeSettingsModal');
-    const profileModal = document.getElementById('profileModal');
-    const settingsModal = document.getElementById('settingsModal');
-    
-    if (closeProfileModal) closeProfileModal.onclick = () => profileModal.classList.add('hidden');
-    if (closeSettingsModal) closeSettingsModal.onclick = () => settingsModal.classList.add('hidden');
-    
-    if (profileModal) profileModal.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.add('hidden'); });
-    if (settingsModal) settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (profileModal && !profileModal.classList.contains('hidden')) profileModal.classList.add('hidden');
-            if (settingsModal && !settingsModal.classList.contains('hidden')) settingsModal.classList.add('hidden');
-        }
-    });
-    
+    // Настройка модальных окон
     setupModalCloseOnBackground();
     
+    // Обработчики модальных окон
     const confirmDeadlineBtn = document.getElementById('confirmDeadlineBtn');
     const cancelDeadlineBtn = document.getElementById('cancelDeadlineBtn');
     const confirmSurrenderBtn = document.getElementById('confirmSurrenderBtn');
@@ -731,8 +875,9 @@ function setupEventListeners() {
     const cancelEditBtn = document.getElementById('cancelEditBtn');
     const saveEditBtn = document.getElementById('saveEditBtn');
     const closeMarkerBtn = document.getElementById('closeMarkerBtn');
+    const closeDetailBtn = document.getElementById('closeDetailBtn');
     
-    if (confirmDeadlineBtn) confirmDeadlineBtn.onclick = () => import('./shop.js').then(m => m.confirmPurchase());
+    if (confirmDeadlineBtn) confirmDeadlineBtn.onclick = () => import('./myTasks.js').then(m => m.confirmPurchase());
     if (cancelDeadlineBtn) cancelDeadlineBtn.onclick = () => hideModal('deadlineModal');
     if (confirmSurrenderBtn) confirmSurrenderBtn.onclick = confirmSurrender;
     if (cancelSurrenderBtn) cancelSurrenderBtn.onclick = () => hideModal('surrenderModal');
@@ -751,19 +896,78 @@ function setupEventListeners() {
     if (cancelEditBtn) cancelEditBtn.onclick = () => hideModal('editHistoryModal');
     if (saveEditBtn) saveEditBtn.onclick = saveEditHistoryTask;
     if (closeMarkerBtn) closeMarkerBtn.onclick = () => hideModal('mapMarkerModal');
+    if (closeDetailBtn) closeDetailBtn.onclick = () => hideModal('detailModal');
 }
+
+// ============================================================
+// КАСТОМНЫЕ СОБЫТИЯ
+// ============================================================
 
 function setupCustomEventHandlers() {
     document.addEventListener('showToast', (e) => showToast(e.detail.message, e.detail.type));
     document.addEventListener('showConfetti', () => showConfetti());
     document.addEventListener('avatarUpdate', (e) => updateAvatarDisplay(e.detail.avatar, e.detail.frame));
-    document.addEventListener('levelUp', (e) => { showToast(`🎉 ПОВЫШЕНИЕ УРОВНЯ! ${e.detail.title} +${e.detail.reward} монет!`, 'success'); showConfetti(); updateUserCard(); });
-    document.addEventListener('categoryAchievement', (e) => { showToast(`🏆 ${e.detail.name} — ${e.detail.level}! +${e.detail.reward} монет`, 'success'); showConfetti(); updateUserCard(); });
-    document.addEventListener('dailyBonus', (e) => showDailyBonusModal(e.detail.bonus, e.detail.streak));
+    
+    // ============================================================
+    // 🆕 УВЕДОМЛЕНИЯ ПРИ СОБЫТИЯХ
+    // ============================================================
+    document.addEventListener('levelUp', (e) => { 
+        const msg = `🎉 ПОВЫШЕНИЕ УРОВНЯ! ${e.detail.title} +${e.detail.reward} монет!`;
+        showToast(msg, 'success');
+        showConfetti();
+        updateUserCard();
+        
+        // 🆕 Отправляем уведомление о повышении уровня
+        sendLevelUpNotification(e.detail.level, e.detail.title, e.detail.reward);
+    });
+    
+    document.addEventListener('categoryAchievement', (e) => { 
+        const msg = `🏆 ${e.detail.name} — ${e.detail.level}! +${e.detail.reward} монет`;
+        showToast(msg, 'success');
+        showConfetti();
+        updateUserCard();
+        
+        // 🆕 Отправляем уведомление о достижении
+        sendAchievementNotification(e.detail.name, e.detail.reward);
+    });
+    
+    document.addEventListener('dailyBonus', (e) => {
+        showDailyBonusModal(e.detail.bonus, e.detail.streak);
+        // 🆕 Уведомление о ежедневном бонусе
+        if (e.detail.bonus > 20) {
+            sendLocalNotification(
+                '🎁 Ежедневный бонус!',
+                `Вы получили ${e.detail.bonus} монет за ${e.detail.streak} дней подряд!`,
+                { tag: 'daily_bonus', type: 'success' }
+            );
+        }
+    });
+    
     document.addEventListener('coinsUpdated', () => updateUserCard());
     document.addEventListener('pointsUpdated', () => updateUserCard());
-    document.addEventListener('userReset', () => { updateUserCard(); updateStats(); showToast('Прогресс сброшен', 'info'); });
-    document.addEventListener('urgentTaskUpdated', () => renderUrgentBanner(user.urgentTask));
+    document.addEventListener('userReset', () => { 
+        updateUserCard(); 
+        updateStats(); 
+        showToast('Прогресс сброшен', 'info');
+    });
+    document.addEventListener('urgentTaskUpdated', () => {
+        renderUrgentBanner(user.urgentTask);
+        // 🆕 Если есть срочное дело — отправляем уведомление
+        if (user.urgentTask) {
+            sendUrgentNotification(
+                user.urgentTask.text,
+                user.urgentTask.desc,
+                user.urgentTask.timeLimit
+            );
+        }
+    });
+    document.addEventListener('packagesUpdated', () => {
+        if (currentTab === 'packages') renderPackages();
+        if (currentTab === 'myTasks') renderMyTasks();
+    });
+    document.addEventListener('statisticsUpdated', () => {
+        if (currentTab === 'statistics') renderStatistics();
+    });
 }
 
 // ============================================================
@@ -773,21 +977,25 @@ function setupCustomEventHandlers() {
 async function init() {
     if (isInitialized) return;
     
-    console.log('🚀 Версия 7.6 — Облачная регистрация и синхронизация');
+    console.log('🚀 Жизнь в делах — Версия 0.8');
+    console.log('📋 Твой трекер целей и свершений');
     
     const versionSpan = document.querySelector('.inline-flex.items-center.gap-3 span');
-    if (versionSpan) versionSpan.textContent = '1000 возможностей России · Версия 7.6';
+    if (versionSpan) versionSpan.textContent = 'Жизнь в делах · Версия 0.8';
     
+    // Загружаем дела
     const tasksLoaded = await initTasks();
     if (!tasksLoaded) {
         showToast('❌ Не удалось загрузить дела!', 'error');
         return;
     }
     
+    // Загружаем пользователя
     loadUserData();
     const settings = loadSettings();
     currentTheme = settings.theme || 'light';
     
+    // Инициализация
     initCategoryProgress();
     generateSecretAchievements();
     updateDailyStreak();
@@ -810,13 +1018,12 @@ async function init() {
     }
     setCurrentUser(user);
     
-    renderCategoryFilters();
-    initDifficultyFilters();
-    initShopTabs();
+    // Настройка навигации
     setupTabNavigation();
-    setupDropdownMenu();
     setupEventListeners();
     setupCustomEventHandlers();
+    
+    // Запускаем таймеры
     startBoosterTimers();
     generateUrgentTask();
     updateUserCard();
@@ -825,26 +1032,66 @@ async function init() {
     setInterval(() => { checkFreePetAfterEscape(); }, 60000);
     updateLastLogin();
     
-    // ============================================================
-    // ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ АВТОРИЗАЦИИ
-    // ============================================================
+    // Инициализация авторизации
     await initAuth();
     setupAuthModals();
-        
-    prefetchResources(['js/activeTasks.js', 'js/history.js', 'js/achievements.js']);
-    window.switchTab('shop');
     
+    // ============================================================
+    // 🆕 ИНИЦИАЛИЗАЦИЯ УВЕДОМЛЕНИЙ
+    // ============================================================
+    try {
+        await initNotifications();
+        console.log('✅ Уведомления инициализированы');
+    } catch (e) {
+        console.warn('Notification init failed:', e);
+    }
+    
+    // Предзагрузка ресурсов
+    prefetchResources([
+        'js/myTasks.js', 
+        'js/packageManager.js', 
+        'js/statistics.js', 
+        'js/petRoom.js', 
+        'js/shopUnified.js',
+        'js/notifications.js'  // 🆕 Добавляем предзагрузку уведомлений
+    ]);
+    
+    // Открываем главную вкладку
+    window.switchTab('myTasks');
+    
+    // Показываем ежедневный бонус
     const today = new Date().toISOString().split('T')[0];
     if (user.lastLoginDate !== today) {
         const bonus = user.dailyStreak >= 7 ? 50 : user.dailyStreak >= 6 ? 40 : 
                       user.dailyStreak >= 5 ? 30 : user.dailyStreak >= 4 ? 25 :
                       user.dailyStreak >= 3 ? 20 : user.dailyStreak >= 2 ? 15 : 10;
         showDailyBonusModal(bonus, user.dailyStreak);
+        
+        // 🆕 Уведомление о ежедневном бонусе
+        setTimeout(() => {
+            if (bonus >= 30) {
+                sendLocalNotification(
+                    '🎁 Ежедневный бонус!',
+                    `Вы получили ${bonus} монет за ${user.dailyStreak} дней подряд!`,
+                    { tag: 'daily_bonus', type: 'success' }
+                );
+            }
+        }, 2000);
     }
     
     isInitialized = true;
-    console.log('✅ Инициализация версии 7.6 завершена');
+    console.log('✅ Инициализация версии 0.8 завершена');
 }
 
-// Запуск
+// ============================================================
+// ЗАПУСК
+// ============================================================
+
+// Экспортируем для доступа из других модулей
+window.renderMyTasks = renderMyTasks;
+window.renderPackages = renderPackages;
+window.renderStatistics = renderStatistics;
+window.renderUnifiedShop = renderUnifiedShop;
+
+// Запускаем приложение
 init();

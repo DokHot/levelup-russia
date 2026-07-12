@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>1000 возможностей России | Версия 7.6</title>
+    <title>Жизнь в делах | Версия 0.8</title>
     
     <!-- PWA / MANIFEST -->
     <link rel="manifest" href="manifest.json">
@@ -46,6 +46,7 @@
             background: linear-gradient(135deg, #0f1a1a 0%, #1a2a2a 100%);
         }
         
+        /* === КАРТОЧКИ ДЕЛ (3D ФЛИППЕР) === */
         .task-card-container {
             width: 100% !important;
             min-width: 100% !important;
@@ -94,6 +95,7 @@
             color: #f3f4f6;
         }
         
+        /* === МАГАЗИН === */
         #shopGrid {
             display: block !important;
             width: 100% !important;
@@ -106,7 +108,7 @@
             width: 100% !important;
         }
         
-        @media (min-width: 768px) {
+        @media (min-width: 640px) {
             #shopGrid .grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
@@ -145,6 +147,7 @@
             text-align: center;
         }
         
+        /* === МОДАЛЬНЫЕ ОКНА === */
         .fixed.inset-0 > div,
         [id$="Modal"] > div:first-child,
         #loginModal > div,
@@ -198,6 +201,7 @@
             padding: 0.5rem !important;
         }
         
+        /* === КАТЕГОРИИ В МАГАЗИНЕ === */
         .category-group,
         .category-group-header,
         .category-group-content {
@@ -255,6 +259,7 @@
             flex-shrink: 0 !important;
         }
         
+        /* === ФИЛЬТРЫ СЛОЖНОСТИ === */
         .diff-filter[data-diff="1"] { color: #10b981 !important; }
         .diff-filter[data-diff="2"] { color: #3b82f6 !important; }
         .diff-filter[data-diff="3"] { color: #f59e0b !important; }
@@ -264,6 +269,7 @@
         .diff-filter:not(.active) { background: #f3f4f6 !important; }
         body.dark .diff-filter:not(.active) { background: #374151 !important; }
         
+        /* === ОБЩИЕ КАРТОЧКИ === */
         .glass-card {
             background: white;
             border-radius: 0.75rem;
@@ -281,6 +287,7 @@
             color: #e0e0e0;
         }
         
+        /* === ВКЛАДКИ === */
         .tab-btn {
             padding: 8px 20px;
             border-radius: 30px;
@@ -290,6 +297,7 @@
             border: none;
             font-size: 14px;
             background: #e5e7eb;
+            color: #374151;
         }
         
         .tab-btn.active {
@@ -298,11 +306,35 @@
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
         
+        .tab-btn.active:hover {
+            background: #059669 !important;
+        }
+        
         body.dark .tab-btn:not(.active) {
             background: #374151;
             color: #9ca3af;
         }
         
+        .tab-btn:hover:not(.active) {
+            background: #d1d5db;
+        }
+        
+        body.dark .tab-btn:hover:not(.active) {
+            background: #4b5563;
+        }
+        
+        /* === ВКЛАДКИ ВНУТРИ "МОИ ДЕЛА" === */
+        .my-tasks-tab {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .my-tasks-tab.active {
+            background: #10b981 !important;
+            color: white;
+        }
+        
+        /* === ПРОГРЕСС-БАР УРОВНЯ === */
         .level-progress {
             height: 8px;
             background: rgba(0, 0, 0, 0.15);
@@ -317,6 +349,7 @@
             transition: width 0.5s ease;
         }
         
+        /* === АНИМАЦИИ === */
         .fade-in {
             animation: fadeIn 0.25s ease-in-out;
         }
@@ -330,6 +363,7 @@
             display: none !important;
         }
         
+        /* === МОНЕТЫ === */
         .coin {
             display: inline-flex;
             align-items: center;
@@ -341,6 +375,7 @@
             color: #78350f;
         }
         
+        /* === СРОЧНОЕ ДЕЛО === */
         .urgent-banner {
             background: linear-gradient(135deg, #ef4444, #f97316);
             animation: pulse 1s infinite;
@@ -351,12 +386,14 @@
             50% { opacity: 0.9; transform: scale(1.01); }
         }
         
+        /* === СЛОЖНОСТЬ === */
         .difficulty-1 { color: #10b981; }
         .difficulty-2 { color: #3b82f6; }
         .difficulty-3 { color: #f59e0b; }
         .difficulty-4 { color: #8b5cf6; }
         .difficulty-5 { color: #ef4444; }
         
+        /* === УВЕДОМЛЕНИЯ === */
         .toast-notification {
             position: fixed;
             bottom: 20px;
@@ -366,6 +403,7 @@
             color: white;
             z-index: 1000;
             animation: slideUp 0.3s ease-out forwards;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
         @keyframes slideUp {
@@ -373,6 +411,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
         
+        /* === КОНФЕТТИ === */
         .confetti-piece {
             position: fixed;
             width: 10px;
@@ -388,6 +427,7 @@
             100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
         
+        /* === АДАПТИВНОСТЬ === */
         @media (max-width: 640px) {
             .tab-btn {
                 padding: 6px 12px;
@@ -395,9 +435,17 @@
             }
             .tabs-container {
                 gap: 4px;
+                flex-wrap: wrap;
+            }
+            .task-card-container {
+                min-height: 300px;
+            }
+            .task-card-flipper {
+                min-height: 300px;
             }
         }
         
+        /* === ОБРЕЗКА ТЕКСТА === */
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -424,7 +472,7 @@
             backface-visibility: hidden;
         }
         
-        /* Исправление цвета кнопок в окнах авторизации */
+        /* === ИСПРАВЛЕНИЕ ЦВЕТА КНОПОК В ОКНАХ АВТОРИЗАЦИИ === */
         #loginModal button,
         #registerModal button,
         #resetPasswordModal button {
@@ -450,34 +498,58 @@
         #resetPasswordModal #closeResetModal:hover {
             color: #374151 !important;
         }
+        
+        /* === СТАТИСТИКА === */
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        
+        body.dark .stats-panel {
+            background: rgba(30, 40, 50, 0.8);
+        }
+        
+        /* === МАГАЗИН — ВКЛАДКИ === */
+        .shop-tab-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .shop-tab-btn.active {
+            background: #10b981 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body>
     <div class="max-w-7xl mx-auto px-4 py-6 md:py-8">
         
+        <!-- ============================================================ -->
         <!-- ШАПКА -->
+        <!-- ============================================================ -->
         <div class="text-center mb-6">
             <div class="flex justify-between items-center">
                 <div class="w-16"></div>
                 <div class="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-full px-5 py-2 shadow-sm">
-                    <i class="fas fa-compass text-green-700"></i>
-                    <span class="text-sm font-medium text-gray-700">1000 возможностей · Версия 7.6</span>
+                    <i class="fas fa-check-circle text-green-700"></i>
+                    <span class="text-sm font-medium text-gray-700">Жизнь в делах · Версия 0.8</span>
                     <button id="themeToggle" class="ml-2 text-gray-600 hover:text-gray-900">🌙</button>
                 </div>
                 <div class="flex gap-2">
-                    <button id="headerProfileBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl">👤</button>
-                    <button id="headerSettingsBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl">⚙️</button>
+                    <button id="headerProfileBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl" title="Профиль">👤</button>
+                    <button id="headerSettingsBtn" class="w-10 h-10 rounded-full bg-white/60 backdrop-blur-sm hover:bg-white/80 transition flex items-center justify-center text-xl" title="Настройки">⚙️</button>
                 </div>
             </div>
             <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-green-800 via-blue-700 to-amber-800 bg-clip-text text-transparent mt-4">
-                1000 возможностей России
+                Жизнь в делах
             </h1>
             <p class="text-gray-600 max-w-2xl mx-auto mt-3">
-                Покупай дела, выбирай сроки, фотографируй, отмечай на карте!
+                Твой трекер целей и свершений
             </p>
         </div>
         
+        <!-- ============================================================ -->
         <!-- ПАНЕЛЬ ПОЛЬЗОВАТЕЛЯ -->
+        <!-- ============================================================ -->
         <div class="user-card-header rounded-2xl p-5 mb-6 shadow-lg" style="background: linear-gradient(135deg, #e8f5e9, #e3f2fd);">
             <div class="flex flex-wrap justify-between items-center gap-4">
                 <div class="flex items-center gap-4">
@@ -520,7 +592,9 @@
             </div>
         </div>
         
+        <!-- ============================================================ -->
         <!-- СРОЧНОЕ ДЕЛО -->
+        <!-- ============================================================ -->
         <div id="urgentTaskBanner" class="mb-6 hidden">
             <div class="urgent-banner rounded-2xl p-4 text-white shadow-xl">
                 <div class="flex flex-wrap justify-between items-center gap-3">
@@ -546,31 +620,21 @@
             </div>
         </div>
         
-        <!-- ВКЛАДКИ -->
-        <div class="tabs-container">
+        <!-- ============================================================ -->
+        <!-- ВКЛАДКИ (ГЛАВНОЕ МЕНЮ) -->
+        <!-- ============================================================ -->
+        <div class="tabs-container flex flex-wrap gap-2 mb-6">
+            <button id="tabMyTasks" class="tab-btn active">📋 Мои дела</button>
             <button id="tabShop" class="tab-btn">🛒 Магазин</button>
-            <button id="tabActive" class="tab-btn">⏳ Активные</button>
+            <button id="tabPackages" class="tab-btn">📦 Сборники</button>
+            <button id="tabStatistics" class="tab-btn">📊 Статистика</button>
             <button id="tabPet" class="tab-btn">🐾 Питомец</button>
-            <button id="tabFriends" class="tab-btn">👥 Друзья</button>
-            <button id="tabLeaderboard" class="tab-btn">🏆 Рейтинг</button>
-            
-            <div class="relative inline-block">
-                <button id="moreTabsBtn" class="tab-btn">📋 Ещё ▼</button>
-                <div id="moreTabsDropdown" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg hidden z-20 border">
-                    <button id="tabHistory" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-xl">📜 История</button>
-                    <button id="tabAchievements" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🏆 Достижения</button>
-                    <button id="tabRandom" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🎡 Рулетка</button>
-                    <button id="tabCalendar" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📅 Календарь</button>
-                    <button id="tabMap" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🗺️ Карта</button>
-                    <button id="tabPhotos" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📸 Фото</button>
-                    <button id="tabSearch" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">🔍 Поиск</button>
-                    <button id="tabAbout" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100">📜 О проекте</button>
-                    <button id="tabSettings" class="dropdown-tab-btn w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-xl">⚙️ Настройки</button>
-                </div>
-            </div>
+            <button id="tabSettings" class="tab-btn">⚙️ Настройки</button>
         </div>
         
-        <!-- ПАНЕЛЬ СТАТИСТИКИ -->
+        <!-- ============================================================ -->
+        <!-- ПАНЕЛЬ СТАТИСТИКИ (быстрая) -->
+        <!-- ============================================================ -->
         <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-md p-5 mb-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="flex items-center gap-4 flex-wrap">
@@ -596,30 +660,45 @@
             </div>
         </div>
         
+        <!-- ============================================================ -->
         <!-- КОНТЕЙНЕРЫ ВКЛАДОК -->
+        <!-- ============================================================ -->
+        <div id="myTasksView" class="fade-in"></div>
         <div id="shopView" class="fade-in hidden"></div>
+        <div id="packagesView" class="fade-in hidden"></div>
+        <div id="statisticsView" class="fade-in hidden"></div>
+        <div id="petView" class="fade-in hidden"></div>
+        <div id="settingsView" class="fade-in hidden"></div>
+        
+        <!-- ============================================================ -->
+        <!-- СКРЫТЫЕ ВКЛАДКИ (доступны через switchTab) -->
+        <!-- ============================================================ -->
+        <div id="shopGrid" class="fade-in hidden"></div>
         <div id="activeView" class="fade-in hidden"></div>
         <div id="historyView" class="fade-in hidden"></div>
         <div id="achievementsView" class="fade-in hidden"></div>
         <div id="randomView" class="fade-in hidden"></div>
-        <div id="petView" class="fade-in hidden"></div>
-        <div id="friendsView" class="fade-in hidden"></div>
-        <div id="leaderboardView" class="fade-in hidden"></div>
-        <div id="searchView" class="fade-in hidden"></div>
         <div id="calendarView" class="fade-in hidden"></div>
         <div id="mapView" class="fade-in hidden"></div>
         <div id="photosView" class="fade-in hidden"></div>
+        <div id="friendsView" class="fade-in hidden"></div>
+        <div id="leaderboardView" class="fade-in hidden"></div>
+        <div id="searchView" class="fade-in hidden"></div>
         <div id="aboutView" class="fade-in hidden"></div>
-        <div id="settingsView" class="fade-in hidden"></div>
         
+        <!-- ============================================================ -->
+        <!-- ПОДВАЛ -->
+        <!-- ============================================================ -->
         <div class="text-center text-gray-400 text-sm mt-8 pb-6">
-            💰 Покупай дела, выбирай сроки, получай монеты и повышай уровень!
+            💰 Покупай дела, заботься о питомце, открывай достижения и повышай уровень!
         </div>
     </div>
     
     <!-- ============================================================ -->
-    <!-- МОДАЛЬНОЕ ОКНО ВХОДА (без гостевого режима) -->
+    <!-- МОДАЛЬНЫЕ ОКНА -->
     <!-- ============================================================ -->
+    
+    <!-- ВХОД -->
     <div id="loginModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <div class="text-center mb-4">
@@ -652,9 +731,7 @@
         </div>
     </div>
     
-    <!-- ============================================================ -->
-    <!-- МОДАЛЬНОЕ ОКНО РЕГИСТРАЦИИ (без гостевого режима) -->
-    <!-- ============================================================ -->
+    <!-- РЕГИСТРАЦИЯ -->
     <div id="registerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <div class="text-center mb-4">
@@ -694,9 +771,7 @@
         </div>
     </div>
     
-    <!-- ============================================================ -->
-    <!-- МОДАЛЬНОЕ ОКНО ВОССТАНОВЛЕНИЯ ПАРОЛЯ -->
-    <!-- ============================================================ -->
+    <!-- ВОССТАНОВЛЕНИЕ ПАРОЛЯ -->
     <div id="resetPasswordModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <div class="text-center mb-4">
@@ -722,10 +797,7 @@
         </div>
     </div>
     
-    <!-- ============================================================ -->
-    <!-- ОСТАЛЬНЫЕ МОДАЛЬНЫЕ ОКНА (ИГРОВЫЕ) -->
-    <!-- ============================================================ -->
-    
+    <!-- ВЫБОР СРОКА ДЕЛА -->
     <div id="deadlineModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4" id="modalTaskTitle">Выберите срок</h3>
@@ -737,6 +809,7 @@
         </div>
     </div>
     
+    <!-- СДАЧА ДЕЛА -->
     <div id="surrenderModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold text-red-600 mb-4">🏳️ Сдаться?</h3>
@@ -748,6 +821,7 @@
         </div>
     </div>
     
+    <!-- ДЕТАЛИ ДЕЛА -->
     <div id="detailModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-0">
             <div id="detailHeader" class="p-5 text-white rounded-t-2xl" style="background: linear-gradient(135deg, #10b981, #059669);">
@@ -763,6 +837,7 @@
         </div>
     </div>
     
+    <!-- ЕЖЕДНЕВНЫЙ БОНУС -->
     <div id="dailyBonusModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
             <div class="text-5xl mb-4">🎁</div>
@@ -772,6 +847,7 @@
         </div>
     </div>
     
+    <!-- ВЫПОЛНЕНИЕ СЛУЧАЙНОГО ДЕЛА -->
     <div id="questCompleteModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6 text-center">
             <div class="text-5xl mb-4">🎉</div>
@@ -781,6 +857,45 @@
         </div>
     </div>
     
+    <!-- ЗАМЕНА СЛУЧАЙНОГО ДЕЛА -->
+    <div id="replaceQuestModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold mb-4">🔄 Заменить дело?</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Заменить <span id="currentQuestText" class="font-bold"></span> за 30 монет?</p>
+            <div class="flex justify-end gap-3">
+                <button id="cancelReplaceBtn" class="px-4 py-2 bg-gray-100 rounded-full">Отмена</button>
+                <button id="confirmReplaceBtn" class="px-4 py-2 bg-blue-600 text-white rounded-full">Заменить</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ПОКУПКА БУСТЕРА -->
+    <div id="buyBoosterModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold mb-2" id="boosterModalTitle">Бустер</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-2" id="boosterModalDesc"></p>
+            <p class="text-sm text-gray-500 mb-4" id="boosterModalPrice"></p>
+            <div class="flex justify-end gap-3">
+                <button id="cancelBoosterBtn" class="px-4 py-2 bg-gray-100 rounded-full">Отмена</button>
+                <button id="confirmBoosterBtn" class="px-4 py-2 bg-green-600 text-white rounded-full">Купить</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ПРОПУСК/ОТМЕНА ЗАДАНИЯ -->
+    <div id="skipTaskModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold mb-2" id="skipModalTitle">Подтверждение</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-2" id="skipModalDesc"></p>
+            <p class="text-sm text-gray-500 mb-4" id="skipModalPrice"></p>
+            <div class="flex justify-end gap-3">
+                <button id="cancelSkipBtn" class="px-4 py-2 bg-gray-100 rounded-full">Отмена</button>
+                <button id="confirmSkipBtn" class="px-4 py-2 bg-red-600 text-white rounded-full">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ЗАГРУЗКА ФОТО -->
     <div id="photoUploadModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4">📸 Добавить фото</h3>
@@ -792,6 +907,7 @@
         </div>
     </div>
     
+    <!-- МЕТКА НА КАРТЕ -->
     <div id="mapMarkerModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-2" id="markerTaskTitle">Название дела</h3>
@@ -801,6 +917,7 @@
         </div>
     </div>
     
+    <!-- РЕДАКТИРОВАНИЕ ИСТОРИИ -->
     <div id="editHistoryModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
             <h3 class="text-xl font-bold mb-4">✏️ Редактировать дело</h3>
@@ -812,6 +929,7 @@
         </div>
     </div>
     
+    <!-- ПРОФИЛЬ -->
     <div id="profileModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6">
             <div class="flex justify-between items-center mb-4">
@@ -822,6 +940,7 @@
         </div>
     </div>
     
+    <!-- НАСТРОЙКИ -->
     <div id="settingsModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6">
             <div class="flex justify-between items-center mb-4">
@@ -832,6 +951,7 @@
         </div>
     </div>
     
+    <!-- ВЫБОР ЛОКАЦИИ -->
     <div id="addLocationModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
         <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto p-4">
             <div class="flex justify-between items-center mb-4">
@@ -846,7 +966,9 @@
         </div>
     </div>
     
+    <!-- ============================================================ -->
     <!-- ОСНОВНОЙ СКРИПТ -->
+    <!-- ============================================================ -->
     <script type="module" src="js/main.js"></script>
     
     <!-- Подавление предупреждения Tailwind -->

@@ -30,7 +30,8 @@ const AVAILABLE_PACKAGES = {
         releaseDate: '2026-08-01',
         alwaysActive: true,
         unlockLevel: 1,
-        price: 0
+        price: 0,
+        source: 'Дела_база.js'
     },
     
     // ============================================================
@@ -197,6 +198,28 @@ const AVAILABLE_PACKAGES = {
 };
 
 // ============================================================
+// ИМЕНА ПАКЕТОВ ДЛЯ ОТОБРАЖЕНИЯ
+// ============================================================
+
+const PACKAGE_NAMES = {
+    'core': 'Базовый',
+    'travel': '🌍 Путешествия',
+    'health': '💪 Спорт и здоровье',
+    'cooking': '🍳 Кулинария',
+    'nature': '🌿 Природа',
+    'creative': '🎨 Творчество',
+    'selfdev': '🧠 Саморазвитие',
+    'relationships': '💕 Отношения',
+    'fishing': '🎣 Рыбалка и охота',
+    'extreme': '⚡ Экстрим',
+    'challenges': '🎯 Челленджи'
+};
+
+export function getPackageName(packageId) {
+    return PACKAGE_NAMES[packageId] || packageId;
+}
+
+// ============================================================
 // ЗАГРУЗКА И СОХРАНЕНИЕ СОСТОЯНИЯ
 // ============================================================
 
@@ -290,6 +313,11 @@ export function activatePackage(id) {
         return false;
     }
     
+    if (pkg.alwaysActive) {
+        showToast('Базовый сборник всегда активен', 'info');
+        return false;
+    }
+    
     if (!isPackageAvailable(id)) {
         showToast(`Доступно с ${pkg.unlockLevel} уровня`, 'error');
         return false;
@@ -298,6 +326,18 @@ export function activatePackage(id) {
     if (state.active.includes(id)) {
         showToast(`Сборник "${pkg.name}" уже активен`, 'info');
         return false;
+    }
+    
+    // Проверяем монеты
+    if (pkg.price > 0 && user.coins < pkg.price) {
+        showToast(`Не хватает монет! Нужно ${pkg.price}`, 'error');
+        return false;
+    }
+    
+    // Списываем монеты
+    if (pkg.price > 0) {
+        user.coins -= pkg.price;
+        saveUserData();
     }
     
     // Если сборник не установлен — устанавливаем
@@ -364,30 +404,33 @@ export async function loadTasksFromPackages() {
         // Базовый пакет (core)
         if (id === 'core') {
             try {
-                // Импортируем базовые дела из Дела_база.js
-                const module = await import('../Дела_база.js');
-                const coreTasks = module.TASKS_DATA || [];
-                allTasks.push(...coreTasks.map(t => ({
-                    ...t,
-                    packageId: 'core',
-                    packageName: 'Базовый'
-                })));
-            } catch (e) {
-                console.warn('Failed to load core tasks:', e);
-                // Fallback: пробуем загрузить из старого файла
-                try {
-                    const module = await import('../Дела.js');
-                    const tasks = module.TASKS_DATA || [];
-                    // Берём только первые 100 дел
-                    const coreTasks = tasks.slice(0, 100);
-                    allTasks.push(...coreTasks.map(t => ({
+                // Пробуем загрузить из глобальной переменной TASKS_DATA
+                if (typeof TASKS_DATA !== 'undefined' && TASKS_DATA && TASKS_DATA.length > 0) {
+                    console.log(`📦 Загружено ${TASKS_DATA.length} дел из базового пакета`);
+                    allTasks.push(...TASKS_DATA.map(t => ({
                         ...t,
                         packageId: 'core',
                         packageName: 'Базовый'
                     })));
-                } catch (e2) {
-                    console.error('Failed to load tasks:', e2);
+                } else {
+                    // Пробуем через динамический импорт
+                    try {
+                        const module = await import('../Дела_база.js');
+                        const coreTasks = module.TASKS_DATA || [];
+                        if (coreTasks.length > 0) {
+                            console.log(`📦 Загружено ${coreTasks.length} дел из Дела_база.js`);
+                            allTasks.push(...coreTasks.map(t => ({
+                                ...t,
+                                packageId: 'core',
+                                packageName: 'Базовый'
+                            })));
+                        }
+                    } catch (e) {
+                        console.warn('Не удалось загрузить Дела_база.js:', e);
+                    }
                 }
+            } catch (e) {
+                console.warn('Failed to load core tasks:', e);
             }
             continue;
         }
@@ -398,17 +441,21 @@ export async function loadTasksFromPackages() {
             try {
                 const module = await import(`../${pkgInfo.source}`);
                 const tasks = module.tasks || module.default || [];
-                allTasks.push(...tasks.map(t => ({
-                    ...t,
-                    packageId: id,
-                    packageName: pkgInfo.name
-                })));
+                if (tasks.length > 0) {
+                    console.log(`📦 Загружено ${tasks.length} дел из пакета "${pkgInfo.name}"`);
+                    allTasks.push(...tasks.map(t => ({
+                        ...t,
+                        packageId: id,
+                        packageName: pkgInfo.name
+                    })));
+                }
             } catch (e) {
                 console.warn(`Failed to load package ${id}:`, e);
             }
         }
     }
     
+    console.log(`📚 Всего загружено дел: ${allTasks.length}`);
     return allTasks;
 }
 
@@ -430,7 +477,9 @@ export function reloadTasks() {
                 if (module.TASKS_DB !== undefined) {
                     module.TASKS_DB = tasks;
                     module.saveTasksToStorage();
-                    showToast('🔄 Список дел обновлён', 'info');
+                    
+                    // Отправляем событие об обновлении
+                    document.dispatchEvent(new CustomEvent('packagesUpdated'));
                     
                     // Обновляем интерфейс
                     if (typeof window.renderMyTasks === 'function') {
@@ -439,6 +488,11 @@ export function reloadTasks() {
                     if (typeof window.renderUnifiedShop === 'function') {
                         window.renderUnifiedShop();
                     }
+                    if (typeof window.renderStatistics === 'function') {
+                        window.renderStatistics();
+                    }
+                    
+                    showToast('🔄 Список дел обновлён', 'info');
                 }
             }
         } catch (e) {
@@ -602,27 +656,4 @@ function renderPackageCard(pkg, active, userLevel) {
             </div>
         </div>
     `;
-}
-// js/packageManager.js — ДОБАВИТЬ В КОНЕЦ ФАЙЛА
-
-// ============================================================
-// ИМЕНА ПАКЕТОВ ДЛЯ ОТОБРАЖЕНИЯ
-// ============================================================
-
-const PACKAGE_NAMES = {
-    'core': 'Базовый',
-    'travel': '🌍 Путешествия',
-    'health': '💪 Спорт и здоровье',
-    'cooking': '🍳 Кулинария',
-    'nature': '🌿 Природа',
-    'creative': '🎨 Творчество',
-    'selfdev': '🧠 Саморазвитие',
-    'relationships': '💕 Отношения',
-    'fishing': '🎣 Рыбалка и охота',
-    'extreme': '⚡ Экстрим',
-    'challenges': '🎯 Челленджи'
-};
-
-export function getPackageName(packageId) {
-    return PACKAGE_NAMES[packageId] || packageId;
 }

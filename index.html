@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Жизнь в делах | Версия 0.8</title>
+    <title>Жизнь в делах | Версия 3.0</title>
     
     <!-- PWA / MANIFEST -->
     <link rel="manifest" href="manifest.json">
@@ -518,6 +518,50 @@
             background: #10b981 !important;
             color: white !important;
         }
+
+        /* === ПАКЕТЫ === */
+        .package-card {
+            transition: all 0.3s ease;
+        }
+
+        .package-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .package-card.locked {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        body.dark .package-card {
+            background: #1f2937 !important;
+        }
+
+        /* === СЕТКА КАРТОЧЕК — 3 КОЛОНКИ === */
+        #tasksList {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 1.5rem !important;
+        }
+
+        #tasksList .task-card-container {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 350px;
+        }
+
+        @media (max-width: 1024px) {
+            #tasksList {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #tasksList {
+                grid-template-columns: repeat(1, 1fr) !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -531,7 +575,7 @@
                 <div class="w-16"></div>
                 <div class="inline-flex items-center gap-3 bg-white/60 backdrop-blur-sm rounded-full px-5 py-2 shadow-sm">
                     <i class="fas fa-check-circle text-green-700"></i>
-                    <span class="text-sm font-medium text-gray-700">Жизнь в делах · Версия 0.8</span>
+                    <span class="text-sm font-medium text-gray-700">Жизнь в делах · Версия 3.0</span>
                     <button id="themeToggle" class="ml-2 text-gray-600 hover:text-gray-900">🌙</button>
                 </div>
                 <div class="flex gap-2">
@@ -967,8 +1011,13 @@
     </div>
     
     <!-- ============================================================ -->
-    <!-- ОСНОВНОЙ СКРИПТ -->
+    <!-- ПОДКЛЮЧЕНИЕ СКРИПТОВ -->
     <!-- ============================================================ -->
+    
+    <!-- БАЗОВЫЙ НАБОР ДЕЛ (100 шт.) -->
+    <script src="Дела_база.js"></script>
+    
+    <!-- ОСНОВНОЙ СКРИПТ -->
     <script type="module" src="js/main.js"></script>
     
     <!-- Подавление предупреждения Tailwind -->

@@ -1,11 +1,12 @@
 // js/tasks.js
 // ============================================================
-// ЗАДАЧИ — ЗАГРУЗКА И УПРАВЛЕНИЕ СПИСКОМ ДЕЛ
+// ЗАДАЧИ — ЗАГРУЗКА И УПРАВЛЕНИЕ СПИСКОМ ДЕЛ (версия 3.0)
 // ============================================================
 
 import { DIFFICULTY_CONFIG } from './config.js';
 import { loadTasks, saveTasks } from './storage.js';
 import { showToast } from './ui.js';
+import { loadTasksFromPackages } from './packageManager.js';
 
 // ============================================================
 // ПЕРЕМЕННЫЕ
@@ -17,11 +18,6 @@ export let TASKS_DB = [];
 // КОНВЕРТАЦИЯ ДАННЫХ
 // ============================================================
 
-/**
- * Конвертирует сырые данные из Дела.js в формат задач
- * @param {Array} rawTasks - сырые данные из TASKS_DATA
- * @returns {Array} массив задач
- */
 export function convertRawTasksToTasks(rawTasks) {
     const tasks = [];
     for (const item of rawTasks) {
@@ -44,6 +40,9 @@ export function convertRawTasksToTasks(rawTasks) {
             price: price,
             baseReward: cfg.baseReward,
             baseXP: cfg.baseXP,
+            unlockLevel: item.unlockLevel || 1,
+            packageId: item.packageId || 'core',
+            packageName: item.packageName || 'Базовый',
             priority: null,
             pinned: false,
             completed: false,
@@ -63,62 +62,34 @@ export function convertRawTasksToTasks(rawTasks) {
 }
 
 // ============================================================
-// ЗАГРУЗКА ДЕЛ ИЗ ФАЙЛА
+// ЗАГРУЗКА ДЕЛ
 // ============================================================
 
-/**
- * Загружает дела из файла Дела.js
- * @returns {Promise<Array>} массив задач
- */
-export async function loadTasksFromFile() {
-    return new Promise((resolve) => {
-        // Проверяем, не загружены ли уже
-        if (typeof TASKS_DATA !== 'undefined' && TASKS_DATA && TASKS_DATA.length > 0) {
-            console.log(`✅ TASKS_DATA уже загружена: ${TASKS_DATA.length} дел`);
-            resolve(convertRawTasksToTasks(TASKS_DATA));
-            return;
+export async function loadAllTasks() {
+    try {
+        // Загружаем дела из активных пакетов
+        const tasks = await loadTasksFromPackages();
+        if (tasks && tasks.length > 0) {
+            TASKS_DB = convertRawTasksToTasks(tasks);
+            saveTasksToStorage();
+            console.log(`📚 Загружено ${TASKS_DB.length} дел из пакетов`);
+            return true;
         }
-        
-        const script = document.createElement('script');
-        script.src = 'Дела.js';
-        
-        script.onload = () => {
-            setTimeout(() => {
-                if (typeof TASKS_DATA !== 'undefined' && TASKS_DATA && TASKS_DATA.length > 0) {
-                    console.log(`✅ Загружено ${TASKS_DATA.length} дел из файла Дела.js`);
-                    resolve(convertRawTasksToTasks(TASKS_DATA));
-                } else {
-                    console.warn('⚠️ TASKS_DATA не найдена');
-                    showToast('❌ Не удалось загрузить дела!', 'error');
-                    resolve([]);
-                }
-            }, 50);
-        };
-        
-        script.onerror = () => {
-            console.error('❌ Ошибка: файл Дела.js не найден!');
-            showToast('❌ Файл Дела.js не найден! Поместите его в ту же папку', 'error');
-            resolve([]);
-        };
-        
-        document.head.appendChild(script);
-    });
+        return false;
+    } catch (error) {
+        console.error('Failed to load tasks:', error);
+        return false;
+    }
 }
 
 // ============================================================
-// СОХРАНЕНИЕ И ЗАГРУЗКА ДЕЛ
+// СОХРАНЕНИЕ И ЗАГРУЗКА ИЗ LOCALSTORAGE
 // ============================================================
 
-/**
- * Сохраняет дела в localStorage
- */
 export function saveTasksToStorage() {
     saveTasks(TASKS_DB);
 }
 
-/**
- * Загружает дела из localStorage
- */
 export function loadTasksFromStorage() {
     const saved = loadTasks();
     if (saved && saved.length > 0) {
@@ -133,46 +104,26 @@ export function loadTasksFromStorage() {
 // ПОЛУЧЕНИЕ ДАННЫХ О ЗАДАЧАХ
 // ============================================================
 
-/**
- * Получает задачу по ID
- * @param {number} id - ID задачи
- * @returns {Object|undefined} задача или undefined
- */
 export function getTaskById(id) {
     return TASKS_DB.find(t => t.id === id);
 }
 
-/**
- * Получает все доступные для покупки задачи
- * @param {Array} purchasedTasks - массив купленных ID
- * @returns {Array} доступные задачи
- */
 export function getAvailableTasks(purchasedTasks) {
     return TASKS_DB.filter(t => !purchasedTasks.includes(t.id));
 }
 
-/**
- * Получает задачи по категории
- * @param {string} category - название категории
- * @returns {Array} задачи в категории
- */
 export function getTasksByCategory(category) {
     return TASKS_DB.filter(t => t.category === category);
 }
 
-/**
- * Получает задачи по сложности
- * @param {number} difficulty - уровень сложности (1-5)
- * @returns {Array} задачи с указанной сложностью
- */
 export function getTasksByDifficulty(difficulty) {
     return TASKS_DB.filter(t => t.difficulty === difficulty);
 }
 
-/**
- * Получает статистику по категориям
- * @returns {Object} объект с количеством дел по категориям
- */
+export function getTasksByPackage(packageId) {
+    return TASKS_DB.filter(t => t.packageId === packageId);
+}
+
 export function getCategoryStats() {
     const stats = {};
     for (const task of TASKS_DB) {
@@ -182,14 +133,22 @@ export function getCategoryStats() {
     return stats;
 }
 
+export function getPackageStats() {
+    const stats = {};
+    for (const task of TASKS_DB) {
+        const pkgId = task.packageId || 'core';
+        if (!stats[pkgId]) stats[pkgId] = { total: 0, completed: 0, purchased: 0 };
+        stats[pkgId].total++;
+        if (task.completed) stats[pkgId].completed++;
+        if (task.purchased) stats[pkgId].purchased++;
+    }
+    return stats;
+}
+
 // ============================================================
 // ИНИЦИАЛИЗАЦИЯ
 // ============================================================
 
-/**
- * Инициализирует загрузку задач (сначала из localStorage, потом из файла при необходимости)
- * @returns {Promise<boolean>} успех инициализации
- */
 export async function initTasks() {
     // Сначала пробуем загрузить из localStorage
     if (loadTasksFromStorage()) {
@@ -197,15 +156,18 @@ export async function initTasks() {
         return true;
     }
     
-    // Если нет — загружаем из файла
-    const tasks = await loadTasksFromFile();
-    if (tasks && tasks.length > 0) {
-        TASKS_DB = tasks;
-        saveTasksToStorage();
-        console.log('📚 Дела загружены из файла и сохранены в localStorage');
+    // Если нет — загружаем из пакетов
+    const success = await loadAllTasks();
+    if (success) {
+        console.log('📚 Дела загружены из пакетов и сохранены в localStorage');
         return true;
     }
     
     console.error('❌ Не удалось загрузить дела!');
     return false;
+}
+
+// Функция для перезагрузки дел (вызывается из packageManager)
+export function reloadTasks() {
+    return loadAllTasks();
 }

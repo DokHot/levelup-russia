@@ -1,6 +1,6 @@
 // js/packageManager.js
 // ============================================================
-// УПРАВЛЕНИЕ СБОРНИКАМИ (ПАКЕТАМИ) ДЕЛ
+// УПРАВЛЕНИЕ СБОРНИКАМИ (ПАКЕТАМИ) ДЕЛ — ВЕРСИЯ 3.0
 // ============================================================
 
 import { user, saveUserData } from './user.js';
@@ -13,126 +13,221 @@ import { showToast } from './ui.js';
 
 const PACKAGES_KEY = 'life_in_deeds_packages';
 
-// Базовый список доступных сборников
+// ============================================================
+// ДОСТУПНЫЕ ПАКЕТЫ (10 тематических)
+// ============================================================
+
 const AVAILABLE_PACKAGES = {
-    // Сезонные
-    summer_2026: {
-        id: 'summer_2026',
-        name: 'Лето 2026',
-        icon: '☀️',
-        type: 'seasonal',
-        description: '100 дел для идеального лета',
+    // БАЗОВЫЙ — ВСЕГДА АКТИВЕН
+    core: {
+        id: 'core',
+        name: 'Базовый сборник',
+        icon: '🏠',
+        type: 'core',
+        description: '100 простых дел для старта',
         totalTasks: 100,
-        version: '1.0',
-        releaseDate: '2026-06-01',
-        alwaysActive: false
+        version: '3.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: true,
+        unlockLevel: 1,
+        price: 0
     },
-    autumn_2026: {
-        id: 'autumn_2026',
-        name: 'Осень 2026',
-        icon: '🍂',
-        type: 'seasonal',
-        description: '80 уютных дел для осени',
-        totalTasks: 80,
-        version: '1.0',
-        releaseDate: '2026-09-01',
-        alwaysActive: false
-    },
-    winter_2026: {
-        id: 'winter_2026',
-        name: 'Зима 2026',
-        icon: '❄️',
-        type: 'seasonal',
-        description: '90 зимних приключений',
-        totalTasks: 90,
-        version: '1.0',
-        releaseDate: '2026-12-01',
-        alwaysActive: false
-    },
-    spring_2027: {
-        id: 'spring_2027',
-        name: 'Весна 2027',
-        icon: '🌱',
-        type: 'seasonal',
-        description: '70 весенних дел для обновления',
-        totalTasks: 70,
-        version: '1.0',
-        releaseDate: '2027-03-01',
-        alwaysActive: false
-    },
-    // Тематические
-    travels: {
-        id: 'travels',
-        name: 'Путешествия',
+    
+    // ============================================================
+    // УРОВЕНЬ 3 — ПРОСТЫЕ ПАКЕТЫ
+    // ============================================================
+    
+    travel: {
+        id: 'travel',
+        name: '🌍 Путешествия',
         icon: '🗺️',
         type: 'thematic',
-        description: '50 дел для исследователей и путешественников',
-        totalTasks: 50,
+        description: '100 дел для исследователей',
+        totalTasks: 100,
         version: '1.0',
-        releaseDate: '2026-07-01',
-        alwaysActive: false
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 3,
+        price: 200,
+        source: 'packages/travel.js'
     },
+    
     health: {
         id: 'health',
-        name: 'Здоровье',
-        icon: '💪',
+        name: '💪 Спорт и здоровье',
+        icon: '🏋️',
         type: 'thematic',
-        description: '60 ЗОЖ-дел для тела и духа',
-        totalTasks: 60,
+        description: '100 ЗОЖ-дел для тела и духа',
+        totalTasks: 100,
         version: '1.0',
-        releaseDate: '2026-07-01',
-        alwaysActive: false
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 3,
+        price: 200,
+        source: 'packages/health.js'
     },
-    career: {
-        id: 'career',
-        name: 'Карьера',
-        icon: '💼',
+    
+    cooking: {
+        id: 'cooking',
+        name: '🍳 Кулинария',
+        icon: '👨‍🍳',
         type: 'thematic',
-        description: '40 дел для профессионального роста',
-        totalTasks: 40,
+        description: '100 кулинарных приключений',
+        totalTasks: 100,
         version: '1.0',
-        releaseDate: '2026-07-01',
-        alwaysActive: false
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 3,
+        price: 200,
+        source: 'packages/cooking.js'
+    },
+    
+    nature: {
+        id: 'nature',
+        name: '🌿 Природа',
+        icon: '🌲',
+        type: 'thematic',
+        description: '100 дел на свежем воздухе',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 3,
+        price: 200,
+        source: 'packages/nature.js'
+    },
+    
+    // ============================================================
+    // УРОВЕНЬ 4 — СРЕДНИЕ ПАКЕТЫ
+    // ============================================================
+    
+    creative: {
+        id: 'creative',
+        name: '🎨 Творчество',
+        icon: '🎭',
+        type: 'thematic',
+        description: '100 дел для вдохновения',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 4,
+        price: 300,
+        source: 'packages/creative.js'
+    },
+    
+    selfdev: {
+        id: 'selfdev',
+        name: '🧠 Саморазвитие',
+        icon: '📚',
+        type: 'thematic',
+        description: '100 дел для роста и развития',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 4,
+        price: 300,
+        source: 'packages/selfdev.js'
+    },
+    
+    relationships: {
+        id: 'relationships',
+        name: '💕 Отношения',
+        icon: '🤝',
+        type: 'thematic',
+        description: '100 дел для близких и друзей',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 4,
+        price: 300,
+        source: 'packages/relationships.js'
+    },
+    
+    // ============================================================
+    // УРОВЕНЬ 5 — СЛОЖНЫЕ ПАКЕТЫ
+    // ============================================================
+    
+    fishing: {
+        id: 'fishing',
+        name: '🎣 Рыбалка и охота',
+        icon: '🐟',
+        type: 'thematic',
+        description: '100 дел для любителей природы',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 5,
+        price: 400,
+        source: 'packages/fishing.js'
+    },
+    
+    extreme: {
+        id: 'extreme',
+        name: '⚡ Экстрим',
+        icon: '🧗',
+        type: 'thematic',
+        description: '100 дел для искателей адреналина',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 5,
+        price: 400,
+        source: 'packages/extreme.js'
+    },
+    
+    challenges: {
+        id: 'challenges',
+        name: '🎯 Челленджи',
+        icon: '🏆',
+        type: 'thematic',
+        description: '100 испытаний на прочность',
+        totalTasks: 100,
+        version: '1.0',
+        releaseDate: '2026-08-01',
+        alwaysActive: false,
+        unlockLevel: 6,
+        price: 500,
+        source: 'packages/challenges.js'
     }
 };
 
-// Ядро — всегда активно
-const CORE_PACKAGE = {
-    id: 'core',
-    name: 'Базовый сборник',
-    icon: '🏠',
-    type: 'core',
-    description: '1000+ дел на все случаи жизни',
-    totalTasks: 1000,
-    version: '1.0',
-    releaseDate: '2026-07-01',
-    alwaysActive: true
-};
-
 // ============================================================
-// ЗАГРУЗКА И СОХРАНЕНИЕ
+// ЗАГРУЗКА И СОХРАНЕНИЕ СОСТОЯНИЯ
 // ============================================================
 
 export function loadPackagesState() {
     const saved = localStorage.getItem(PACKAGES_KEY);
     if (saved) {
         try {
-            return JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            // Убеждаемся, что core всегда есть
+            if (!parsed.active.includes('core')) {
+                parsed.active.unshift('core');
+            }
+            if (!parsed.installed.includes('core')) {
+                parsed.installed.unshift('core');
+            }
+            return parsed;
         } catch (e) {
             console.warn('Failed to parse packages state', e);
         }
     }
-    // По умолчанию: core активен, summer активен, остальные выключены
+    
+    // По умолчанию: только базовый пакет активен
     return {
-        active: ['core', 'summer_2026'],
-        installed: ['core', 'summer_2026'],
+        active: ['core'],
+        installed: ['core'],
         custom: []
     };
 }
 
 export function savePackagesState(state) {
     localStorage.setItem(PACKAGES_KEY, JSON.stringify(state));
-    // Обновляем user.packages для синхронизации
     if (user) {
         if (!user.packages) user.packages = {};
         user.packages.active = state.active;
@@ -146,9 +241,7 @@ export function savePackagesState(state) {
 // ============================================================
 
 export function getAllPackages() {
-    const all = { ...AVAILABLE_PACKAGES };
-    all.core = CORE_PACKAGE;
-    return all;
+    return { ...AVAILABLE_PACKAGES };
 }
 
 export function getPackageInfo(id) {
@@ -176,8 +269,16 @@ export function isPackageInstalled(id) {
     return installed.includes(id);
 }
 
+export function isPackageAvailable(id) {
+    const pkg = getPackageInfo(id);
+    if (!pkg) return false;
+    if (pkg.alwaysActive) return true;
+    const userLevel = user?.level || 1;
+    return userLevel >= (pkg.unlockLevel || 1);
+}
+
 // ============================================================
-// УПРАВЛЕНИЕ СБОРНИКАМИ
+// УПРАВЛЕНИЕ ПАКЕТАМИ
 // ============================================================
 
 export function activatePackage(id) {
@@ -186,6 +287,11 @@ export function activatePackage(id) {
     
     if (!pkg) {
         showToast('Сборник не найден', 'error');
+        return false;
+    }
+    
+    if (!isPackageAvailable(id)) {
+        showToast(`Доступно с ${pkg.unlockLevel} уровня`, 'error');
         return false;
     }
     
@@ -246,156 +352,100 @@ export function togglePackage(id) {
     }
 }
 
-export function installCustomPackage(name, icon, description, tasks) {
-    const id = `custom_${Date.now()}`;
-    const pkg = {
-        id: id,
-        name: name,
-        icon: icon || '📄',
-        type: 'custom',
-        description: description || 'Мой личный сборник',
-        totalTasks: tasks.length,
-        version: '1.0',
-        releaseDate: new Date().toISOString().split('T')[0],
-        alwaysActive: false,
-        tasks: tasks
-    };
-    
-    const state = loadPackagesState();
-    if (!state.custom) state.custom = [];
-    state.custom.push(pkg);
-    state.installed.push(id);
-    state.active.push(id);
-    savePackagesState(state);
-    
-    // Сохраняем задачи сборника в localStorage
-    localStorage.setItem(`package_${id}`, JSON.stringify(pkg));
-    
-    // Перезагружаем дела
-    reloadTasks();
-    
-    showToast(`📦 Сборник "${name}" создан и активирован!`, 'success');
-    return id;
-}
-
-export function deleteCustomPackage(id) {
-    const state = loadPackagesState();
-    const pkg = state.custom?.find(p => p.id === id);
-    
-    if (!pkg) {
-        showToast('Сборник не найден', 'error');
-        return false;
-    }
-    
-    // Удаляем из всех списков
-    state.custom = state.custom.filter(p => p.id !== id);
-    state.installed = state.installed.filter(i => i !== id);
-    state.active = state.active.filter(a => a !== id);
-    savePackagesState(state);
-    
-    // Удаляем задачи из localStorage
-    localStorage.removeItem(`package_${id}`);
-    
-    // Перезагружаем дела
-    reloadTasks();
-    
-    showToast(`🗑️ Сборник "${pkg.name}" удалён`, 'info');
-    return true;
-}
-
 // ============================================================
-// ЗАГРУЗКА ДЕЛ ИЗ СБОРНИКОВ
+// ЗАГРУЗКА ДЕЛ ИЗ ПАКЕТОВ
 // ============================================================
 
-export function loadTasksFromPackages() {
+export async function loadTasksFromPackages() {
     const active = getActivePackages();
     const allTasks = [];
     
     for (const id of active) {
-        // Ядро
+        // Базовый пакет (core)
         if (id === 'core') {
-            // Загружаем из TASKS_DATA (глобальная переменная из Дела.js)
-            if (typeof TASKS_DATA !== 'undefined' && TASKS_DATA.length > 0) {
-                allTasks.push(...TASKS_DATA.map(t => ({
+            try {
+                // Импортируем базовые дела из Дела_база.js
+                const module = await import('../Дела_база.js');
+                const coreTasks = module.TASKS_DATA || [];
+                allTasks.push(...coreTasks.map(t => ({
                     ...t,
                     packageId: 'core',
                     packageName: 'Базовый'
                 })));
+            } catch (e) {
+                console.warn('Failed to load core tasks:', e);
+                // Fallback: пробуем загрузить из старого файла
+                try {
+                    const module = await import('../Дела.js');
+                    const tasks = module.TASKS_DATA || [];
+                    // Берём только первые 100 дел
+                    const coreTasks = tasks.slice(0, 100);
+                    allTasks.push(...coreTasks.map(t => ({
+                        ...t,
+                        packageId: 'core',
+                        packageName: 'Базовый'
+                    })));
+                } catch (e2) {
+                    console.error('Failed to load tasks:', e2);
+                }
             }
             continue;
         }
         
-        // Встроенные сборники
-        const pkgInfo = AVAILABLE_PACKAGES[id];
-        if (pkgInfo) {
-            const tasks = loadPackageTasks(id);
-            if (tasks) {
+        // Тематические пакеты
+        const pkgInfo = getPackageInfo(id);
+        if (pkgInfo && pkgInfo.source) {
+            try {
+                const module = await import(`../${pkgInfo.source}`);
+                const tasks = module.tasks || module.default || [];
                 allTasks.push(...tasks.map(t => ({
                     ...t,
                     packageId: id,
                     packageName: pkgInfo.name
                 })));
+            } catch (e) {
+                console.warn(`Failed to load package ${id}:`, e);
             }
-            continue;
-        }
-        
-        // Пользовательские сборники
-        const state = loadPackagesState();
-        const customPkg = state.custom?.find(p => p.id === id);
-        if (customPkg && customPkg.tasks) {
-            allTasks.push(...customPkg.tasks.map(t => ({
-                ...t,
-                packageId: id,
-                packageName: customPkg.name
-            })));
         }
     }
     
     return allTasks;
 }
 
-function loadPackageTasks(id) {
-    // Пробуем загрузить из localStorage
-    const saved = localStorage.getItem(`package_${id}`);
-    if (saved) {
-        try {
-            const pkg = JSON.parse(saved);
-            if (pkg.tasks) return pkg.tasks;
-        } catch (e) {
-            console.warn('Failed to load package tasks', e);
-        }
-    }
-    
-    // Если не найдено — возвращаем пустой массив
-    return [];
-}
-
 // ============================================================
 // ПЕРЕЗАГРУЗКА ДЕЛ
 // ============================================================
 
-function reloadTasks() {
-    // Импортируем динамически, чтобы избежать циклических зависимостей
-    import('./tasks.js').then(module => {
-        if (module.reloadTasks) {
-            module.reloadTasks();
-        } else {
-            // Простой перезагруз: обновляем TASKS_DB
-            const tasks = loadTasksFromPackages();
-            if (module.TASKS_DB !== undefined) {
-                module.TASKS_DB = tasks;
-                module.saveTasksToStorage();
-                // Обновляем интерфейс
-                if (typeof window.renderMyTasks === 'function') {
-                    window.renderMyTasks();
+let reloadTimeout = null;
+
+export function reloadTasks() {
+    if (reloadTimeout) clearTimeout(reloadTimeout);
+    
+    reloadTimeout = setTimeout(async () => {
+        try {
+            const tasks = await loadTasksFromPackages();
+            if (tasks.length > 0) {
+                // Обновляем глобальный TASKS_DB
+                const module = await import('./tasks.js');
+                if (module.TASKS_DB !== undefined) {
+                    module.TASKS_DB = tasks;
+                    module.saveTasksToStorage();
+                    showToast('🔄 Список дел обновлён', 'info');
+                    
+                    // Обновляем интерфейс
+                    if (typeof window.renderMyTasks === 'function') {
+                        window.renderMyTasks();
+                    }
+                    if (typeof window.renderUnifiedShop === 'function') {
+                        window.renderUnifiedShop();
+                    }
                 }
-                showToast('🔄 Список дел обновлён', 'info');
             }
+        } catch (e) {
+            console.error('Failed to reload tasks:', e);
         }
-    }).catch(() => {
-        // Fallback: просто перезагружаем страницу
-        window.location.reload();
-    });
+        reloadTimeout = null;
+    }, 300);
 }
 
 // ============================================================
@@ -412,83 +462,63 @@ export function renderPackages() {
     const state = loadPackagesState();
     const allPackages = getAllPackages();
     const active = state.active || ['core'];
+    const userLevel = user?.level || 1;
     
-    // Группируем сборники
+    // Группируем пакеты
     const corePackages = [];
-    const seasonalPackages = [];
-    const thematicPackages = [];
-    const customPackages = state.custom || [];
+    const availablePackages = [];
+    const lockedPackages = [];
     
     for (const [id, pkg] of Object.entries(allPackages)) {
-        if (pkg.type === 'core') {
+        if (pkg.alwaysActive) {
             corePackages.push({ id, ...pkg });
-        } else if (pkg.type === 'seasonal') {
-            seasonalPackages.push({ id, ...pkg });
-        } else if (pkg.type === 'thematic') {
-            thematicPackages.push({ id, ...pkg });
+        } else if (isPackageAvailable(id)) {
+            availablePackages.push({ id, ...pkg });
+        } else {
+            lockedPackages.push({ id, ...pkg });
         }
     }
     
     let html = `
         <div class="packages-container max-w-3xl mx-auto">
-            <h2 class="text-xl font-bold mb-4">📦 Сборники дел</h2>
-            <p class="text-sm text-gray-500 mb-6">Включайте сборники, чтобы добавлять дела в магазин</p>
+            <h2 class="text-2xl font-bold mb-2">📦 Сборники дел</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                Включайте сборники, чтобы добавлять новые дела. 
+                <span class="text-green-600">Уровень ${userLevel}</span>
+            </p>
     `;
     
     // ===== БАЗОВЫЙ СБОРНИК =====
     html += `
         <div class="mb-6">
             <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Основной</h3>
-            ${renderPackageCard(corePackages[0], active)}
+            ${corePackages.map(pkg => renderPackageCard(pkg, active, userLevel)).join('')}
         </div>
     `;
     
-    // ===== СЕЗОННЫЕ =====
-    if (seasonalPackages.length > 0) {
+    // ===== ДОСТУПНЫЕ СБОРНИКИ =====
+    if (availablePackages.length > 0) {
         html += `
             <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">🌿 Сезонные</h3>
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">🎯 Доступные</h3>
                 <div class="space-y-3">
-                    ${seasonalPackages.map(pkg => renderPackageCard(pkg, active)).join('')}
+                    ${availablePackages.map(pkg => renderPackageCard(pkg, active, userLevel)).join('')}
                 </div>
             </div>
         `;
     }
     
-    // ===== ТЕМАТИЧЕСКИЕ =====
-    if (thematicPackages.length > 0) {
+    // ===== ЗАБЛОКИРОВАННЫЕ СБОРНИКИ =====
+    if (lockedPackages.length > 0) {
         html += `
             <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">🎯 Тематические</h3>
+                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">🔒 Закрытые</h3>
                 <div class="space-y-3">
-                    ${thematicPackages.map(pkg => renderPackageCard(pkg, active)).join('')}
+                    ${lockedPackages.map(pkg => renderPackageCard(pkg, active, userLevel)).join('')}
                 </div>
             </div>
         `;
     }
-    
-    // ===== МОИ СБОРНИКИ =====
-    html += `
-        <div class="mb-6">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">✏️ Мои сборники</h3>
-                <div class="flex gap-2">
-                    <button id="createCustomPackageBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full text-sm transition">
-                        ➕ Создать
-                    </button>
-                    <button id="importPackageBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-sm transition">
-                        📥 Импорт
-                    </button>
-                </div>
-            </div>
-            <div class="space-y-3">
-                ${customPackages.length === 0 ? 
-                    '<div class="text-center text-gray-400 py-8 text-sm">Нет своих сборников. Создайте первый!</div>' :
-                    customPackages.map(pkg => renderPackageCard(pkg, active, true)).join('')
-                }
-            </div>
-        </div>
-    `;
     
     html += `
             <div class="text-center text-xs text-gray-400 mt-4">
@@ -499,10 +529,7 @@ export function renderPackages() {
     
     container.innerHTML = html;
     
-    // ============================================================
-    // ОБРАБОТЧИКИ СОБЫТИЙ
-    // ============================================================
-    
+    // Обработчики кнопок
     document.querySelectorAll('.toggle-package-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
@@ -510,60 +537,51 @@ export function renderPackages() {
             renderPackages();
         });
     });
-    
-    document.querySelectorAll('.delete-package-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            if (confirm('Удалить этот сборник?')) {
-                deleteCustomPackage(id);
-                renderPackages();
-            }
-        });
-    });
-    
-    const createBtn = document.getElementById('createCustomPackageBtn');
-    if (createBtn) {
-        createBtn.addEventListener('click', showCreatePackageModal);
-    }
-    
-    const importBtn = document.getElementById('importPackageBtn');
-    if (importBtn) {
-        importBtn.addEventListener('click', showImportPackageModal);
-    }
 }
 
 // ============================================================
-// ОТРИСОВКА КАРТОЧКИ СБОРНИКА
+// ОТРИСОВКА КАРТОЧКИ ПАКЕТА
 // ============================================================
 
-function renderPackageCard(pkg, active, isCustom = false) {
+function renderPackageCard(pkg, active, userLevel) {
     if (!pkg) return '';
     
     const isActive = active.includes(pkg.id);
-    const isCore = pkg.type === 'core';
+    const isAvailable = isPackageAvailable(pkg.id);
+    const isCore = pkg.alwaysActive === true;
     const icon = pkg.icon || '📦';
+    const isLocked = !isAvailable && !isCore;
     
     let statusHtml = '';
+    let buttonHtml = '';
+    
     if (isCore) {
         statusHtml = '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">✅ Всегда активен</span>';
     } else if (isActive) {
         statusHtml = '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">✅ Активен</span>';
+        buttonHtml = `
+            <button class="toggle-package-btn px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-sm transition" data-id="${pkg.id}">
+                Деактивировать
+            </button>
+        `;
+    } else if (isLocked) {
+        statusHtml = `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">🔒 Уровень ${pkg.unlockLevel}</span>`;
+        buttonHtml = `
+            <button class="px-4 py-1.5 bg-gray-300 text-gray-500 rounded-full text-sm cursor-not-allowed" disabled>
+                🔒 Закрыт
+            </button>
+        `;
     } else {
         statusHtml = '<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">⬜ Не активен</span>';
+        buttonHtml = `
+            <button class="toggle-package-btn px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm transition" data-id="${pkg.id}">
+                🎯 Активировать ${pkg.price > 0 ? `(${pkg.price}₿)` : ''}
+            </button>
+        `;
     }
     
-    const buttonHtml = isCore ? '' :
-        (isActive ? 
-            `<button class="toggle-package-btn px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-sm transition" data-id="${pkg.id}">Деактивировать</button>` :
-            `<button class="toggle-package-btn px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-full text-sm transition" data-id="${pkg.id}">Активировать</button>`
-        );
-    
-    const deleteHtml = isCustom && !isCore ?
-        `<button class="delete-package-btn px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full text-sm transition" data-id="${pkg.id}">🗑️</button>` :
-        '';
-    
     return `
-        <div class="package-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4 ${isActive ? 'border-green-500' : 'border-gray-300'}">
+        <div class="package-card bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4 ${isActive ? 'border-green-500' : isLocked ? 'border-gray-300' : 'border-gray-300'}">
             <div class="flex flex-wrap justify-between items-start gap-3">
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div class="text-3xl">${icon}</div>
@@ -573,172 +591,38 @@ function renderPackageCard(pkg, active, isCustom = false) {
                             ${statusHtml}
                         </div>
                         <div class="text-sm text-gray-500">${pkg.description}</div>
-                        <div class="text-xs text-gray-400">📋 ${pkg.totalTasks} дел · ${pkg.releaseDate || '—'}</div>
+                        <div class="text-xs text-gray-400">📋 ${pkg.totalTasks} дел</div>
+                        ${isLocked ? `<div class="text-xs text-orange-500">🔓 Откроется на ${pkg.unlockLevel} уровне</div>` : ''}
+                        ${!isCore && isAvailable && !isActive ? `<div class="text-xs text-blue-500">💰 ${pkg.price} монет за активацию</div>` : ''}
                     </div>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
                     ${buttonHtml}
-                    ${deleteHtml}
                 </div>
             </div>
         </div>
     `;
 }
+// js/packageManager.js — ДОБАВИТЬ В КОНЕЦ ФАЙЛА
 
 // ============================================================
-// МОДАЛКА СОЗДАНИЯ СБОРНИКА
+// ИМЕНА ПАКЕТОВ ДЛЯ ОТОБРАЖЕНИЯ
 // ============================================================
 
-function showCreatePackageModal() {
-    let modal = document.getElementById('createPackageModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'createPackageModal';
-        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden';
-        modal.innerHTML = `
-            <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full mx-4 p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">📦 Создать сборник</h2>
-                    <button id="closeCreatePackageBtn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                </div>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Название</label>
-                        <input type="text" id="newPackageName" placeholder="Мой сборник" class="w-full px-4 py-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Иконка</label>
-                        <input type="text" id="newPackageIcon" placeholder="📄" class="w-full px-4 py-2 border rounded-lg" maxlength="2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Описание</label>
-                        <input type="text" id="newPackageDesc" placeholder="Краткое описание" class="w-full px-4 py-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Дела (по одному на строку)</label>
-                        <textarea id="newPackageTasks" rows="6" class="w-full px-4 py-2 border rounded-lg font-mono text-sm" placeholder="Искупаться в море | Лето | 1&#10;Съесть арбуз на пляже | Лето | 1&#10;Встретить рассвет | Лето | 2"></textarea>
-                        <p class="text-xs text-gray-400 mt-1">Формат: Название | Категория | Сложность (1-5)</p>
-                    </div>
-                </div>
-                <div class="flex gap-3 mt-4">
-                    <button id="cancelCreatePackageBtn" class="flex-1 px-4 py-2 bg-gray-200 rounded-full">Отмена</button>
-                    <button id="confirmCreatePackageBtn" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-full">Создать</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        document.getElementById('closeCreatePackageBtn')?.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-        document.getElementById('cancelCreatePackageBtn')?.addEventListener('click', () => {
-            modal.classList.add('hidden');
-        });
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.classList.add('hidden');
-        });
-    }
-    
-    modal.classList.remove('hidden');
-    
-    const confirmBtn = document.getElementById('confirmCreatePackageBtn');
-    if (confirmBtn) {
-        confirmBtn.onclick = () => {
-            const name = document.getElementById('newPackageName')?.value.trim();
-            const icon = document.getElementById('newPackageIcon')?.value.trim() || '📄';
-            const description = document.getElementById('newPackageDesc')?.value.trim() || 'Мой личный сборник';
-            const tasksText = document.getElementById('newPackageTasks')?.value || '';
-            
-            if (!name) {
-                showToast('Введите название сборника', 'error');
-                return;
-            }
-            
-            const tasks = parseTasksFromText(tasksText);
-            if (tasks.length === 0) {
-                showToast('Добавьте хотя бы одно дело', 'error');
-                return;
-            }
-            
-            installCustomPackage(name, icon, description, tasks);
-            modal.classList.add('hidden');
-            renderPackages();
-        };
-    }
-}
+const PACKAGE_NAMES = {
+    'core': 'Базовый',
+    'travel': '🌍 Путешествия',
+    'health': '💪 Спорт и здоровье',
+    'cooking': '🍳 Кулинария',
+    'nature': '🌿 Природа',
+    'creative': '🎨 Творчество',
+    'selfdev': '🧠 Саморазвитие',
+    'relationships': '💕 Отношения',
+    'fishing': '🎣 Рыбалка и охота',
+    'extreme': '⚡ Экстрим',
+    'challenges': '🎯 Челленджи'
+};
 
-// ============================================================
-// ПАРСИНГ ДЕЛ ИЗ ТЕКСТА
-// ============================================================
-
-function parseTasksFromText(text) {
-    const lines = text.split('\n').filter(line => line.trim());
-    const tasks = [];
-    
-    for (const line of lines) {
-        const parts = line.split('|').map(s => s.trim());
-        if (parts.length >= 3) {
-            const [taskText, category, difficultyStr] = parts;
-            const difficulty = parseInt(difficultyStr);
-            if (taskText && category && difficulty >= 1 && difficulty <= 5) {
-                tasks.push({
-                    text: taskText,
-                    category: category,
-                    difficulty: difficulty,
-                    isFree: difficulty === 1 && Math.random() > 0.7,
-                    price: getPriceByDifficulty(difficulty),
-                    baseReward: getRewardByDifficulty(difficulty),
-                    baseXP: getXPByDifficulty(difficulty),
-                    custom: true
-                });
-            }
-        }
-    }
-    
-    return tasks;
-}
-
-function getPriceByDifficulty(diff) {
-    const prices = { 1: 20, 2: 60, 3: 200, 4: 500, 5: 1200 };
-    return prices[diff] || 20;
-}
-
-function getRewardByDifficulty(diff) {
-    const rewards = { 1: 35, 2: 90, 3: 280, 4: 700, 5: 1600 };
-    return rewards[diff] || 35;
-}
-
-function getXPByDifficulty(diff) {
-    const xp = { 1: 10, 2: 20, 3: 40, 4: 80, 5: 150 };
-    return xp[diff] || 10;
-}
-
-// ============================================================
-// МОДАЛКА ИМПОРТА СБОРНИКА
-// ============================================================
-
-function showImportPackageModal() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const data = JSON.parse(ev.target.result);
-                if (data.name && data.tasks && Array.isArray(data.tasks)) {
-                    installCustomPackage(data.name, data.icon || '📦', data.description || 'Импортированный сборник', data.tasks);
-                    renderPackages();
-                } else {
-                    showToast('❌ Неверный формат файла', 'error');
-                }
-            } catch (err) {
-                showToast('❌ Ошибка чтения файла', 'error');
-            }
-        };
-        reader.readAsText(file);
-    };
-    input.click();
+export function getPackageName(packageId) {
+    return PACKAGE_NAMES[packageId] || packageId;
 }

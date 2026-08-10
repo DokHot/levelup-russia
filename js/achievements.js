@@ -1,13 +1,31 @@
 // js/achievements.js
 // ============================================================
-// ДОСТИЖЕНИЯ — УПРАВЛЕНИЕ ВСЕМИ ТИПАМИ ДОСТИЖЕНИЙ (версия 7.1.2)
+// ДОСТИЖЕНИЯ — УПРАВЛЕНИЕ ВСЕМИ ТИПАМИ ДОСТИЖЕНИЙ (версия 3.0)
+// С ПРИВЯЗКОЙ К ПАКЕТАМ
 // ============================================================
 
 import { user, addCoins, getCurrentLevel, getCategoryAchievementProgress, saveUserData } from './user.js';
-import { CATEGORY_ACHIEVEMENTS } from './config.js';
+import { CATEGORY_ACHIEVEMENTS, getPackageName } from './config.js';
+import { getActivePackages } from './packageManager.js';
 import { showToast, showConfetti } from './ui.js';
 
 let currentAchievementTab = 'normal'; // normal, category, secret
+
+// ============================================================
+// ПОЛУЧЕНИЕ АКТИВНЫХ ДОСТИЖЕНИЙ (ТОЛЬКО ИЗ АКТИВНЫХ ПАКЕТОВ)
+// ============================================================
+
+export function getActiveAchievements() {
+    const activePackages = getActivePackages();
+    // core всегда активен
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    return CATEGORY_ACHIEVEMENTS.filter(ach => {
+        return activePackages.includes(ach.packageId || 'core');
+    });
+}
 
 // ============================================================
 // ОБЫЧНЫЕ ДОСТИЖЕНИЯ
@@ -28,7 +46,24 @@ export function checkAchievements() {
     const freeResurrectUsed = user.pet?.freeResurrectUsed || false;
     const nightTasksCount = user.stats?.nightTasksCount || 0;
     
+    // Получаем активные пакеты для проверки пакетных достижений
+    const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    // Считаем дела по пакетам
+    const packageTaskCounts = {};
+    for (const task of user.completedTasks) {
+        const pkgId = task.packageId || 'core';
+        if (!packageTaskCounts[pkgId]) packageTaskCounts[pkgId] = 0;
+        packageTaskCounts[pkgId]++;
+    }
+    
     const achievementsList = [
+        // ============================================================
+        // БАЗОВЫЕ ДОСТИЖЕНИЯ (всегда доступны)
+        // ============================================================
         { id: "first_task", name: "🎯 Первое дело", check: () => completedCount >= 1, reward: 50 },
         { id: "ten_tasks", name: "🔟 Десятка", check: () => completedCount >= 10, reward: 100 },
         { id: "fifty_tasks", name: "🎯 Пятидесятка", check: () => completedCount >= 50, reward: 250 },
@@ -54,12 +89,55 @@ export function checkAchievements() {
         { id: "rich_1000", name: "💰 Богач", check: () => totalCoins >= 1000, reward: 100 },
         { id: "rich_5000", name: "💎 Магнат", check: () => totalCoins >= 5000, reward: 250 },
         { id: "rich_10000", name: "👑 Олигарх", check: () => totalCoins >= 10000, reward: 500 },
-        { id: "premium_pet", name: "💎 Элитный клуб", check: () => petsOwned >= 1 && (user.pet?.purchasedPets?.includes('fennec') || user.pet?.purchasedPets?.includes('phoenix')), reward: 300 },
+        { id: "premium_pet", name: "💎 Элитный клуб", check: () => petsOwned >= 1 && (user.pet?.purchasedPets?.includes('fennec') || user.pet?.purchasedPets?.includes('phoenix') || user.pet?.purchasedPets?.includes('dragon') || user.pet?.purchasedPets?.includes('unicorn')), reward: 300 },
         { id: "luxury_room", name: "🏰 Роскошь", check: () => roomsOwned >= 1 && user.pet?.purchasedRooms?.includes('luxury_room'), reward: 200 },
         { id: "space_room", name: "🚀 Космонавт", check: () => roomsOwned >= 1 && user.pet?.purchasedRooms?.includes('space_room'), reward: 250 },
         { id: "room_collector", name: "🏠 Архитектор", check: () => roomsOwned >= 5, reward: 500 },
         { id: "fennec_night", name: "🌙 Ночной охотник", check: () => currentPet === 'fennec' && nightTasksCount >= 30, reward: 400 },
-        { id: "phoenix_rebirth", name: "🔥 Возрождение", check: () => currentPet === 'phoenix' && freeResurrectUsed === true, reward: 350 }
+        { id: "phoenix_rebirth", name: "🔥 Возрождение", check: () => currentPet === 'phoenix' && freeResurrectUsed === true, reward: 350 },
+        
+        // ============================================================
+        // ПАКЕТНЫЕ ДОСТИЖЕНИЯ (доступны только при активном пакете)
+        // ============================================================
+        { id: "travel_25", name: "🗺️ Начинающий путешественник", check: () => activePackages.includes('travel') && (packageTaskCounts['travel'] || 0) >= 25, reward: 100 },
+        { id: "travel_50", name: "🌍 Опытный путешественник", check: () => activePackages.includes('travel') && (packageTaskCounts['travel'] || 0) >= 50, reward: 200 },
+        { id: "travel_100", name: "🏔️ Мастер путешествий", check: () => activePackages.includes('travel') && (packageTaskCounts['travel'] || 0) >= 100, reward: 400 },
+        
+        { id: "health_25", name: "💪 Начинающий спортсмен", check: () => activePackages.includes('health') && (packageTaskCounts['health'] || 0) >= 25, reward: 100 },
+        { id: "health_50", name: "🏋️ Опытный спортсмен", check: () => activePackages.includes('health') && (packageTaskCounts['health'] || 0) >= 50, reward: 200 },
+        { id: "health_100", name: "🏆 Мастер спорта", check: () => activePackages.includes('health') && (packageTaskCounts['health'] || 0) >= 100, reward: 400 },
+        
+        { id: "cooking_25", name: "🍳 Начинающий повар", check: () => activePackages.includes('cooking') && (packageTaskCounts['cooking'] || 0) >= 25, reward: 100 },
+        { id: "cooking_50", name: "👨‍🍳 Опытный повар", check: () => activePackages.includes('cooking') && (packageTaskCounts['cooking'] || 0) >= 50, reward: 200 },
+        { id: "cooking_100", name: "⭐ Шеф-повар", check: () => activePackages.includes('cooking') && (packageTaskCounts['cooking'] || 0) >= 100, reward: 400 },
+        
+        { id: "nature_25", name: "🌿 Друг природы", check: () => activePackages.includes('nature') && (packageTaskCounts['nature'] || 0) >= 25, reward: 100 },
+        { id: "nature_50", name: "🌲 Хранитель природы", check: () => activePackages.includes('nature') && (packageTaskCounts['nature'] || 0) >= 50, reward: 200 },
+        { id: "nature_100", name: "🌍 Защитник природы", check: () => activePackages.includes('nature') && (packageTaskCounts['nature'] || 0) >= 100, reward: 400 },
+        
+        { id: "creative_25", name: "🎨 Начинающий творец", check: () => activePackages.includes('creative') && (packageTaskCounts['creative'] || 0) >= 25, reward: 100 },
+        { id: "creative_50", name: "🖼️ Опытный творец", check: () => activePackages.includes('creative') && (packageTaskCounts['creative'] || 0) >= 50, reward: 200 },
+        { id: "creative_100", name: "🎭 Мастер творчества", check: () => activePackages.includes('creative') && (packageTaskCounts['creative'] || 0) >= 100, reward: 400 },
+        
+        { id: "selfdev_25", name: "📚 Начинающий ученик", check: () => activePackages.includes('selfdev') && (packageTaskCounts['selfdev'] || 0) >= 25, reward: 100 },
+        { id: "selfdev_50", name: "🧠 Опытный ученик", check: () => activePackages.includes('selfdev') && (packageTaskCounts['selfdev'] || 0) >= 50, reward: 200 },
+        { id: "selfdev_100", name: "🎓 Мастер саморазвития", check: () => activePackages.includes('selfdev') && (packageTaskCounts['selfdev'] || 0) >= 100, reward: 400 },
+        
+        { id: "relationships_25", name: "💕 Друг", check: () => activePackages.includes('relationships') && (packageTaskCounts['relationships'] || 0) >= 25, reward: 100 },
+        { id: "relationships_50", name: "🤝 Хороший друг", check: () => activePackages.includes('relationships') && (packageTaskCounts['relationships'] || 0) >= 50, reward: 200 },
+        { id: "relationships_100", name: "💖 Мастер отношений", check: () => activePackages.includes('relationships') && (packageTaskCounts['relationships'] || 0) >= 100, reward: 400 },
+        
+        { id: "fishing_25", name: "🎣 Начинающий рыбак", check: () => activePackages.includes('fishing') && (packageTaskCounts['fishing'] || 0) >= 25, reward: 100 },
+        { id: "fishing_50", name: "🐟 Опытный рыбак", check: () => activePackages.includes('fishing') && (packageTaskCounts['fishing'] || 0) >= 50, reward: 200 },
+        { id: "fishing_100", name: "🎣 Мастер рыбалки", check: () => activePackages.includes('fishing') && (packageTaskCounts['fishing'] || 0) >= 100, reward: 400 },
+        
+        { id: "extreme_25", name: "⚡ Начинающий экстримал", check: () => activePackages.includes('extreme') && (packageTaskCounts['extreme'] || 0) >= 25, reward: 100 },
+        { id: "extreme_50", name: "🧗 Опытный экстримал", check: () => activePackages.includes('extreme') && (packageTaskCounts['extreme'] || 0) >= 50, reward: 200 },
+        { id: "extreme_100", name: "🏔️ Легенда экстрима", check: () => activePackages.includes('extreme') && (packageTaskCounts['extreme'] || 0) >= 100, reward: 400 },
+        
+        { id: "challenges_25", name: "🎯 Начинающий чемпион", check: () => activePackages.includes('challenges') && (packageTaskCounts['challenges'] || 0) >= 25, reward: 100 },
+        { id: "challenges_50", name: "🏆 Опытный чемпион", check: () => activePackages.includes('challenges') && (packageTaskCounts['challenges'] || 0) >= 50, reward: 200 },
+        { id: "challenges_100", name: "👑 Мастер челленджей", check: () => activePackages.includes('challenges') && (packageTaskCounts['challenges'] || 0) >= 100, reward: 400 }
     ];
     
     for (const ach of achievementsList) {
@@ -85,12 +163,24 @@ export function renderAchievements() {
     
     // Создаём структуру с вкладками
     const html = `
-        <div class="achievements-container">
-            <div class="flex gap-2 border-b pb-2 mb-4">
-                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'normal' ? 'bg-green-600 text-white' : 'bg-gray-200'}" data-tab="normal">🏆 Простые</button>
-                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'category' ? 'bg-green-600 text-white' : 'bg-gray-200'}" data-tab="category">📊 Категорийные</button>
-                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'secret' ? 'bg-green-600 text-white' : 'bg-gray-200'}" data-tab="secret">❓ Скрытые</button>
+        <div class="achievements-container max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-4">🏆 Достижения</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                Открывайте новые пакеты, чтобы получать больше достижений!
+            </p>
+            
+            <div class="flex flex-wrap gap-2 border-b pb-2 mb-4">
+                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'normal' ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}" data-tab="normal">
+                    🏆 Простые
+                </button>
+                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'category' ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}" data-tab="category">
+                    📊 Категорийные
+                </button>
+                <button class="ach-tab-btn px-4 py-2 rounded-lg ${currentAchievementTab === 'secret' ? 'bg-green-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}" data-tab="secret">
+                    ❓ Скрытые
+                </button>
             </div>
+            
             <div id="achievementsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
         </div>
     `;
@@ -117,6 +207,10 @@ export function renderAchievements() {
         renderSecretAchievements(grid);
     }
 }
+
+// ============================================================
+// ОБЫЧНЫЕ ДОСТИЖЕНИЯ
+// ============================================================
 
 function renderNormalAchievements(grid) {
     const unlockedIds = user.achievements.map(a => a.id);
@@ -152,7 +246,38 @@ function renderNormalAchievements(grid) {
         { id: "phoenix_rebirth", name: "Возрождение", desc: "Воскресить Феникса", icon: "🔥" },
         { id: "luxury_room", name: "Роскошь", desc: "Купить комнату Люкс", icon: "🏰" },
         { id: "space_room", name: "Космонавт", desc: "Купить комнату Космос", icon: "🚀" },
-        { id: "room_collector", name: "Архитектор", desc: "Купить все 5 комнат", icon: "🏠" }
+        { id: "room_collector", name: "Архитектор", desc: "Купить все 5 комнат", icon: "🏠" },
+        // Пакетные достижения
+        { id: "travel_25", name: "Начинающий путешественник", desc: "Выполнить 25 дел из пакета Путешествия", icon: "🗺️" },
+        { id: "travel_50", name: "Опытный путешественник", desc: "Выполнить 50 дел из пакета Путешествия", icon: "🌍" },
+        { id: "travel_100", name: "Мастер путешествий", desc: "Выполнить 100 дел из пакета Путешествия", icon: "🏔️" },
+        { id: "health_25", name: "Начинающий спортсмен", desc: "Выполнить 25 дел из пакета Спорт и здоровье", icon: "💪" },
+        { id: "health_50", name: "Опытный спортсмен", desc: "Выполнить 50 дел из пакета Спорт и здоровье", icon: "🏋️" },
+        { id: "health_100", name: "Мастер спорта", desc: "Выполнить 100 дел из пакета Спорт и здоровье", icon: "🏆" },
+        { id: "cooking_25", name: "Начинающий повар", desc: "Выполнить 25 дел из пакета Кулинария", icon: "🍳" },
+        { id: "cooking_50", name: "Опытный повар", desc: "Выполнить 50 дел из пакета Кулинария", icon: "👨‍🍳" },
+        { id: "cooking_100", name: "Шеф-повар", desc: "Выполнить 100 дел из пакета Кулинария", icon: "⭐" },
+        { id: "nature_25", name: "Друг природы", desc: "Выполнить 25 дел из пакета Природа", icon: "🌿" },
+        { id: "nature_50", name: "Хранитель природы", desc: "Выполнить 50 дел из пакета Природа", icon: "🌲" },
+        { id: "nature_100", name: "Защитник природы", desc: "Выполнить 100 дел из пакета Природа", icon: "🌍" },
+        { id: "creative_25", name: "Начинающий творец", desc: "Выполнить 25 дел из пакета Творчество", icon: "🎨" },
+        { id: "creative_50", name: "Опытный творец", desc: "Выполнить 50 дел из пакета Творчество", icon: "🖼️" },
+        { id: "creative_100", name: "Мастер творчества", desc: "Выполнить 100 дел из пакета Творчество", icon: "🎭" },
+        { id: "selfdev_25", name: "Начинающий ученик", desc: "Выполнить 25 дел из пакета Саморазвитие", icon: "📚" },
+        { id: "selfdev_50", name: "Опытный ученик", desc: "Выполнить 50 дел из пакета Саморазвитие", icon: "🧠" },
+        { id: "selfdev_100", name: "Мастер саморазвития", desc: "Выполнить 100 дел из пакета Саморазвитие", icon: "🎓" },
+        { id: "relationships_25", name: "Друг", desc: "Выполнить 25 дел из пакета Отношения", icon: "💕" },
+        { id: "relationships_50", name: "Хороший друг", desc: "Выполнить 50 дел из пакета Отношения", icon: "🤝" },
+        { id: "relationships_100", name: "Мастер отношений", desc: "Выполнить 100 дел из пакета Отношения", icon: "💖" },
+        { id: "fishing_25", name: "Начинающий рыбак", desc: "Выполнить 25 дел из пакета Рыбалка", icon: "🎣" },
+        { id: "fishing_50", name: "Опытный рыбак", desc: "Выполнить 50 дел из пакета Рыбалка", icon: "🐟" },
+        { id: "fishing_100", name: "Мастер рыбалки", desc: "Выполнить 100 дел из пакета Рыбалка", icon: "🎣" },
+        { id: "extreme_25", name: "Начинающий экстримал", desc: "Выполнить 25 дел из пакета Экстрим", icon: "⚡" },
+        { id: "extreme_50", name: "Опытный экстримал", desc: "Выполнить 50 дел из пакета Экстрим", icon: "🧗" },
+        { id: "extreme_100", name: "Легенда экстрима", desc: "Выполнить 100 дел из пакета Экстрим", icon: "🏔️" },
+        { id: "challenges_25", name: "Начинающий чемпион", desc: "Выполнить 25 дел из пакета Челленджи", icon: "🎯" },
+        { id: "challenges_50", name: "Опытный чемпион", desc: "Выполнить 50 дел из пакета Челленджи", icon: "🏆" },
+        { id: "challenges_100", name: "Мастер челленджей", desc: "Выполнить 100 дел из пакета Челленджи", icon: "👑" }
     ];
     
     let html = '';
@@ -170,32 +295,82 @@ function renderNormalAchievements(grid) {
     grid.innerHTML = html;
 }
 
+// ============================================================
+// КАТЕГОРИЙНЫЕ ДОСТИЖЕНИЯ (ТОЛЬКО ИЗ АКТИВНЫХ ПАКЕТОВ)
+// ============================================================
+
 function renderCategoryAchievements(grid) {
+    const activeAchievements = getActiveAchievements();
+    
+    if (activeAchievements.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+                <div class="text-4xl mb-2">📦</div>
+                <p>Активируйте сборники, чтобы увидеть достижения по категориям</p>
+                <button onclick="window.switchTab('packages')" class="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm transition">
+                    📦 Перейти к сборникам
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
     let html = '';
-    for (const ach of CATEGORY_ACHIEVEMENTS) {
+    let currentPackage = '';
+    
+    for (const ach of activeAchievements) {
         const progress = getCategoryAchievementProgress(ach.id);
         const levelNames = ["🥉", "🥈", "🥇", "💎"];
         const levelText = ["Бронза", "Серебро", "Золото", "Платина"];
         const currentLevelName = progress.level > 0 ? levelText[progress.level - 1] : "Не начато";
+        const pkgName = getPackageName(ach.packageId || 'core');
+        
+        // Группировка по пакетам
+        if (currentPackage !== ach.packageId) {
+            if (currentPackage !== '') {
+                html += `</div>`;
+            }
+            currentPackage = ach.packageId;
+            html += `
+                <div class="col-span-full mt-2 mb-1">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">📦 ${pkgName}</div>
+                </div>
+            `;
+        }
         
         html += `
             <div class="rounded-xl p-3 text-center shadow-sm transition-all hover:scale-105">
                 <div class="text-3xl mb-1">${ach.name.split(' ')[0]}</div>
                 <div class="font-bold text-sm">${ach.name}</div>
-                <div class="w-full bg-gray-200 rounded-full h-2 my-2">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 my-2">
                     <div class="bg-green-600 h-2 rounded-full" style="width: ${progress.percent}%"></div>
                 </div>
-                <div class="text-xs text-gray-500">${progress.current} / ${progress.next} (${currentLevelName})</div>
-                <div class="text-xs text-gray-400 mt-1">${levelNames[progress.level]} ${progress.level > 0 ? ach.rewards[progress.level - 1] : 0} / ${ach.rewards[3]} ₿</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">${progress.current} / ${progress.next} (${currentLevelName})</div>
+                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">${levelNames[progress.level]} ${progress.level > 0 ? ach.rewards[progress.level - 1] : 0} / ${ach.rewards[3]} ₿</div>
             </div>
         `;
     }
+    
+    if (currentPackage !== '') {
+        html += `</div>`;
+    }
+    
     grid.innerHTML = html;
 }
 
+// ============================================================
+// СКРЫТЫЕ ДОСТИЖЕНИЯ
+// ============================================================
+
 function renderSecretAchievements(grid) {
     if (!user.secretAchievements || user.secretAchievements.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">❓ Нет скрытых достижений</div>';
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+                <div class="text-4xl mb-2">❓</div>
+                <p>Нет скрытых достижений</p>
+                <p class="text-sm text-gray-400 mt-1">Продолжайте играть, чтобы открывать секреты!</p>
+            </div>
+        `;
         return;
     }
     
@@ -203,13 +378,18 @@ function renderSecretAchievements(grid) {
     const unlockedSecrets = user.secretAchievements.filter(ach => ach.completed === true);
     
     if (unlockedSecrets.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">❓ Вы ещё не открыли ни одного скрытого достижения. Продолжайте играть!</div>';
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+                <div class="text-4xl mb-2">🔮</div>
+                <p>Вы ещё не открыли ни одного скрытого достижения</p>
+                <p class="text-sm text-gray-400 mt-1">Продолжайте играть и экспериментировать!</p>
+            </div>
+        `;
         return;
     }
     
     let html = '';
-    for (let i = 0; i < unlockedSecrets.length; i++) {
-        const ach = unlockedSecrets[i];
+    for (const ach of unlockedSecrets) {
         html += `
             <div class="rounded-xl p-3 text-center shadow-sm transition-all hover:scale-105 border-2 border-purple-500">
                 <div class="text-3xl mb-1">${ach.icon || '🏆'}</div>
@@ -224,7 +404,7 @@ function renderSecretAchievements(grid) {
 }
 
 // ============================================================
-// СКРЫТЫЕ ДОСТИЖЕНИЯ
+// СКРЫТЫЕ ДОСТИЖЕНИЯ — ГЕНЕРАЦИЯ И ПРОВЕРКА
 // ============================================================
 
 const SECRET_TEMPLATES = [
@@ -247,7 +427,11 @@ const SECRET_TEMPLATES = [
     { condition: "marker_1", hint: "Добавить 1 метку", reward: 30, icon: "📍" },
     { condition: "urgent_1", hint: "Выполнить срочное дело", reward: 50, icon: "⚠️" },
     { condition: "surrender_1", hint: "Сдаться в 1 деле", reward: 20, icon: "🏳️" },
-    { condition: "repurchase_1", hint: "Повторить дело", reward: 40, icon: "🔄" }
+    { condition: "repurchase_1", hint: "Повторить дело", reward: 40, icon: "🔄" },
+    { condition: "activate_package_1", hint: "Активировать первый дополнительный пакет", reward: 50, icon: "📦" },
+    { condition: "activate_all_packages", hint: "Активировать все пакеты", reward: 200, icon: "🌟" },
+    { condition: "pet_level_3", hint: "Прокачать питомца до 3 уровня", reward: 60, icon: "🐾" },
+    { condition: "pet_level_5", hint: "Прокачать питомца до 5 уровня", reward: 150, icon: "👑" }
 ];
 
 export function generateSecretAchievements() {
@@ -274,10 +458,16 @@ export function generateSecretAchievements() {
 export function checkSecretAchievements(conditionType, value) {
     if (!user.secretAchievements) return;
     
+    // Получаем активные пакеты для проверки
+    const activePackages = getActivePackages();
+    const allPackages = ['core', 'travel', 'health', 'cooking', 'nature', 'creative', 'selfdev', 'relationships', 'fishing', 'extreme', 'challenges'];
+    
     for (const ach of user.secretAchievements) {
         if (ach.completed) continue;
         
         let completed = false;
+        
+        // Базовые условия
         if (conditionType === 'complete' && ach.condition === 'complete_any_1' && value >= 1) completed = true;
         else if (conditionType === 'complete' && ach.condition === 'complete_any_3' && value >= 3) completed = true;
         else if (conditionType === 'complete' && ach.condition === 'complete_any_5' && value >= 5) completed = true;
@@ -295,6 +485,19 @@ export function checkSecretAchievements(conditionType, value) {
         else if (conditionType === 'repurchase' && ach.condition === 'repurchase_1' && value >= 1) completed = true;
         else if (conditionType === 'night' && ach.condition === 'night_1' && value === true) completed = true;
         else if (conditionType === 'morning' && ach.condition === 'morning_1' && value === true) completed = true;
+        
+        // Пакетные условия
+        else if (ach.condition === 'activate_package_1' && conditionType === 'package_activated') {
+            const activeCount = activePackages.filter(p => p !== 'core').length;
+            if (activeCount >= 1) completed = true;
+        }
+        else if (ach.condition === 'activate_all_packages' && conditionType === 'package_activated') {
+            const allPkg = ['travel', 'health', 'cooking', 'nature', 'creative', 'selfdev', 'relationships', 'fishing', 'extreme', 'challenges'];
+            const activeCount = allPkg.filter(p => activePackages.includes(p)).length;
+            if (activeCount === allPkg.length) completed = true;
+        }
+        else if (ach.condition === 'pet_level_3' && conditionType === 'pet_level' && value >= 3) completed = true;
+        else if (ach.condition === 'pet_level_5' && conditionType === 'pet_level' && value >= 5) completed = true;
         
         if (completed) {
             ach.completed = true;

@@ -1,6 +1,5 @@
-// js/main.js
 // ============================================================
-// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 0.8)
+// ТОЧКА ВХОДА — ГЛАВНЫЙ МОДУЛЬ ПРИЛОЖЕНИЯ (версия 3.0)
 // ЖИЗНЬ В ДЕЛАХ — Твой трекер целей и свершений
 // ============================================================
 
@@ -45,9 +44,6 @@ import { lazyLoad, preloadModule, prefetchResources } from './performance/lazyLo
 import { forceSync, getSyncStatus } from './backgroundSync.js';
 import { initAuth, setupAuthModals } from './authSystem.js';
 import { renderUnifiedShop } from './shopUnified.js';
-// ============================================================
-// 🆕 ИМПОРТ УВЕДОМЛЕНИЙ
-// ============================================================
 import { 
     initNotifications, 
     sendUrgentNotification, 
@@ -102,7 +98,6 @@ const PREFETCH_ORDER = ['shop', 'packages', 'statistics', 'pet'];
 window.switchTab = async function(tabName) {
     console.log('🔄 Переключение на вкладку:', tabName);
     
-    // Список всех основных вкладок и их кнопок
     const tabButtons = {
         myTasks: document.getElementById('tabMyTasks'),
         shop: document.getElementById('tabShop'),
@@ -121,7 +116,6 @@ window.switchTab = async function(tabName) {
         settings: document.getElementById('settingsView')
     };
     
-    // Скрытые вкладки (доступны через настройки)
     const hiddenViews = {
         shopGrid: document.getElementById('shopGrid'),
         active: document.getElementById('activeView'),
@@ -137,27 +131,22 @@ window.switchTab = async function(tabName) {
         about: document.getElementById('aboutView')
     };
     
-    // Скрываем все кнопки вкладок
     Object.values(tabButtons).forEach(btn => {
         if (btn) btn.classList.remove('active');
     });
     
-    // Скрываем все основные вкладки
     Object.values(views).forEach(view => {
         if (view) view.classList.add('hidden');
     });
     
-    // Скрываем все скрытые вкладки
     Object.values(hiddenViews).forEach(view => {
         if (view) view.classList.add('hidden');
     });
     
-    // Показываем выбранную вкладку
     if (views[tabName]) {
         views[tabName].classList.remove('hidden');
     }
     
-    // Активируем кнопку
     if (tabButtons[tabName]) {
         tabButtons[tabName].classList.add('active');
     }
@@ -165,7 +154,6 @@ window.switchTab = async function(tabName) {
     currentTab = tabName;
     prefetchNextTab(tabName);
     
-    // Рендерим содержимое вкладки
     if (!tabRendered[tabName]) {
         await renderTabContent(tabName);
         tabRendered[tabName] = true;
@@ -211,7 +199,6 @@ async function renderTabContent(tabName) {
             renderSettingsTab();
             break;
             
-        // Скрытые вкладки (для обратной совместимости)
         case 'shopGrid':
             const shopGridView = document.getElementById('shopGrid');
             if (shopGridView) {
@@ -379,7 +366,7 @@ function refreshTabContent(tabName) {
 }
 
 // ============================================================
-// ОТДЕЛЬНАЯ ФУНКЦИЯ ДЛЯ НАСТРОЕК (ПОЛНАЯ ВЕРСИЯ)
+// ОТДЕЛЬНАЯ ФУНКЦИЯ ДЛЯ НАСТРОЕК
 // ============================================================
 
 function renderSettingsTab() {
@@ -391,14 +378,11 @@ function renderSettingsTab() {
     
     settingsView.classList.remove('hidden');
     
-    // Получаем текущие настройки
     const currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
     const currentBg = user.currentBackground || 'default';
     const isCloudEnabled = user.photos?.cloudEnabled || false;
     const username = getUsername();
     const level = getCurrentLevel();
-    
-    // Статус уведомлений
     const notificationStatus = getNotificationPermission();
     const isPushSupportedBrowser = isPushSupported();
     
@@ -449,9 +433,7 @@ function renderSettingsTab() {
                 </div>
             </div>
             
-            <!-- ============================================================ -->
-            <!-- 🆕 УВЕДОМЛЕНИЯ -->
-            <!-- ============================================================ -->
+            <!-- Уведомления -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 mb-4">
                 <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">🔔 Уведомления</h3>
                 <div class="space-y-3">
@@ -525,7 +507,7 @@ function renderSettingsTab() {
             <!-- О проекте -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-2">📋 О проекте</h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Жизнь в делах · Версия 0.8</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Жизнь в делах · Версия 3.0</p>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Твой трекер целей и свершений</p>
                 <button id="aboutBtnSettings" class="mt-3 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 transition">
                     📜 Подробнее
@@ -534,11 +516,7 @@ function renderSettingsTab() {
         </div>
     `;
     
-    // ============================================================
-    // ОБРАБОТЧИКИ
-    // ============================================================
-    
-    // Тема
+    // Обработчики
     document.getElementById('themeLightBtn')?.addEventListener('click', () => {
         document.body.classList.remove('dark');
         document.body.classList.add('light');
@@ -555,7 +533,6 @@ function renderSettingsTab() {
         showToast('🌙 Тёмная тема', 'success');
     });
     
-    // Фоны
     document.getElementById('bgDefaultBtn')?.addEventListener('click', () => {
         changeBackground('default');
         renderSettingsTab();
@@ -571,9 +548,6 @@ function renderSettingsTab() {
         renderSettingsTab();
     });
     
-    // ============================================================
-    // 🆕 УВЕДОМЛЕНИЯ — ОБРАБОТЧИКИ
-    // ============================================================
     document.getElementById('enableNotificationsBtn')?.addEventListener('click', async () => {
         if (notificationStatus === 'granted') {
             showToast('✅ Уведомления уже разрешены', 'info');
@@ -589,8 +563,6 @@ function renderSettingsTab() {
         if (result) {
             renderSettingsTab();
             showToast('✅ Уведомления включены!', 'success');
-            
-            // Отправляем тестовое уведомление
             setTimeout(async () => {
                 await showTestNotification();
             }, 1000);
@@ -607,7 +579,6 @@ function renderSettingsTab() {
         showToast('📨 Тестовое уведомление отправлено!', 'success');
     });
     
-    // Синхронизация
     document.getElementById('syncNowBtn')?.addEventListener('click', async () => {
         showToast('🔄 Синхронизация...', 'info');
         try {
@@ -623,12 +594,10 @@ function renderSettingsTab() {
         showToast('☁️ Функция в разработке', 'info');
     });
     
-    // Данные
     document.getElementById('exportBtnSettings')?.addEventListener('click', exportData);
     document.getElementById('importBtnSettings')?.addEventListener('click', importProgress);
     document.getElementById('resetBtnSettings')?.addEventListener('click', resetProgress);
     
-    // О проекте
     document.getElementById('aboutBtnSettings')?.addEventListener('click', () => {
         window.switchTab('about');
     });
@@ -730,7 +699,7 @@ function exportData() {
         settings: { theme: currentTheme },
         packages: localStorage.getItem('life_in_deeds_packages'),
         exportDate: new Date().toISOString(),
-        version: '0.8'
+        version: '3.0'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
@@ -835,7 +804,6 @@ function setupEventListeners() {
         };
     }
     
-    // Кнопка профиля
     const headerProfileBtn = document.getElementById('headerProfileBtn');
     if (headerProfileBtn) {
         headerProfileBtn.onclick = async () => {
@@ -844,7 +812,6 @@ function setupEventListeners() {
         };
     }
     
-    // Кнопка настроек (запасной вариант)
     const headerSettingsBtn = document.getElementById('headerSettingsBtn');
     if (headerSettingsBtn) {
         headerSettingsBtn.onclick = () => {
@@ -852,10 +819,8 @@ function setupEventListeners() {
         };
     }
     
-    // Настройка модальных окон
     setupModalCloseOnBackground();
     
-    // Обработчики модальных окон
     const confirmDeadlineBtn = document.getElementById('confirmDeadlineBtn');
     const cancelDeadlineBtn = document.getElementById('cancelDeadlineBtn');
     const confirmSurrenderBtn = document.getElementById('confirmSurrenderBtn');
@@ -908,16 +873,11 @@ function setupCustomEventHandlers() {
     document.addEventListener('showConfetti', () => showConfetti());
     document.addEventListener('avatarUpdate', (e) => updateAvatarDisplay(e.detail.avatar, e.detail.frame));
     
-    // ============================================================
-    // 🆕 УВЕДОМЛЕНИЯ ПРИ СОБЫТИЯХ
-    // ============================================================
     document.addEventListener('levelUp', (e) => { 
         const msg = `🎉 ПОВЫШЕНИЕ УРОВНЯ! ${e.detail.title} +${e.detail.reward} монет!`;
         showToast(msg, 'success');
         showConfetti();
         updateUserCard();
-        
-        // 🆕 Отправляем уведомление о повышении уровня
         sendLevelUpNotification(e.detail.level, e.detail.title, e.detail.reward);
     });
     
@@ -926,14 +886,11 @@ function setupCustomEventHandlers() {
         showToast(msg, 'success');
         showConfetti();
         updateUserCard();
-        
-        // 🆕 Отправляем уведомление о достижении
         sendAchievementNotification(e.detail.name, e.detail.reward);
     });
     
     document.addEventListener('dailyBonus', (e) => {
         showDailyBonusModal(e.detail.bonus, e.detail.streak);
-        // 🆕 Уведомление о ежедневном бонусе
         if (e.detail.bonus > 20) {
             sendLocalNotification(
                 '🎁 Ежедневный бонус!',
@@ -952,7 +909,6 @@ function setupCustomEventHandlers() {
     });
     document.addEventListener('urgentTaskUpdated', () => {
         renderUrgentBanner(user.urgentTask);
-        // 🆕 Если есть срочное дело — отправляем уведомление
         if (user.urgentTask) {
             sendUrgentNotification(
                 user.urgentTask.text,
@@ -977,25 +933,23 @@ function setupCustomEventHandlers() {
 async function init() {
     if (isInitialized) return;
     
-    console.log('🚀 Жизнь в делах — Версия 0.8');
+    console.log('🚀 Жизнь в делах — Версия 3.0');
     console.log('📋 Твой трекер целей и свершений');
+    console.log('📦 Система пакетов: база 100 дел + 10 пакетов по 100 дел');
     
     const versionSpan = document.querySelector('.inline-flex.items-center.gap-3 span');
-    if (versionSpan) versionSpan.textContent = 'Жизнь в делах · Версия 0.8';
+    if (versionSpan) versionSpan.textContent = 'Жизнь в делах · Версия 3.0';
     
-    // Загружаем дела
     const tasksLoaded = await initTasks();
     if (!tasksLoaded) {
         showToast('❌ Не удалось загрузить дела!', 'error');
         return;
     }
     
-    // Загружаем пользователя
     loadUserData();
     const settings = loadSettings();
     currentTheme = settings.theme || 'light';
     
-    // Инициализация
     initCategoryProgress();
     generateSecretAchievements();
     updateDailyStreak();
@@ -1018,12 +972,10 @@ async function init() {
     }
     setCurrentUser(user);
     
-    // Настройка навигации
     setupTabNavigation();
     setupEventListeners();
     setupCustomEventHandlers();
     
-    // Запускаем таймеры
     startBoosterTimers();
     generateUrgentTask();
     updateUserCard();
@@ -1032,13 +984,9 @@ async function init() {
     setInterval(() => { checkFreePetAfterEscape(); }, 60000);
     updateLastLogin();
     
-    // Инициализация авторизации
     await initAuth();
     setupAuthModals();
     
-    // ============================================================
-    // 🆕 ИНИЦИАЛИЗАЦИЯ УВЕДОМЛЕНИЙ
-    // ============================================================
     try {
         await initNotifications();
         console.log('✅ Уведомления инициализированы');
@@ -1046,20 +994,17 @@ async function init() {
         console.warn('Notification init failed:', e);
     }
     
-    // Предзагрузка ресурсов
     prefetchResources([
         'js/myTasks.js', 
         'js/packageManager.js', 
         'js/statistics.js', 
         'js/petRoom.js', 
         'js/shopUnified.js',
-        'js/notifications.js'  // 🆕 Добавляем предзагрузку уведомлений
+        'js/notifications.js'
     ]);
     
-    // Открываем главную вкладку
     window.switchTab('myTasks');
     
-    // Показываем ежедневный бонус
     const today = new Date().toISOString().split('T')[0];
     if (user.lastLoginDate !== today) {
         const bonus = user.dailyStreak >= 7 ? 50 : user.dailyStreak >= 6 ? 40 : 
@@ -1067,7 +1012,6 @@ async function init() {
                       user.dailyStreak >= 3 ? 20 : user.dailyStreak >= 2 ? 15 : 10;
         showDailyBonusModal(bonus, user.dailyStreak);
         
-        // 🆕 Уведомление о ежедневном бонусе
         setTimeout(() => {
             if (bonus >= 30) {
                 sendLocalNotification(
@@ -1080,18 +1024,16 @@ async function init() {
     }
     
     isInitialized = true;
-    console.log('✅ Инициализация версии 0.8 завершена');
+    console.log('✅ Инициализация версии 3.0 завершена');
 }
 
 // ============================================================
 // ЗАПУСК
 // ============================================================
 
-// Экспортируем для доступа из других модулей
 window.renderMyTasks = renderMyTasks;
 window.renderPackages = renderPackages;
 window.renderStatistics = renderStatistics;
 window.renderUnifiedShop = renderUnifiedShop;
 
-// Запускаем приложение
 init();

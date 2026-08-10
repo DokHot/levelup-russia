@@ -1,16 +1,14 @@
 // js/statistics.js
 // ============================================================
 // СТАТИСТИКА — ПРОГРЕСС, ДОСТИЖЕНИЯ, КАЛЕНДАРЬ, ОТКРЫТИЕ ДЕЛ
-// Версия 1.0 — С индикатором прогресса открытия
+// Версия 3.1 — Исправлена работа с TASKS_DB
 // ============================================================
 
-import { user, getCurrentLevel, getNextLevel, saveUserData } from './user.js';
+import { user, getCurrentLevel, getNextLevel } from './user.js';
 import { TASKS_DB } from './tasks.js';
 import { getActivePackages, getPackageInfo } from './packageManager.js';
 import { CATEGORY_ACHIEVEMENTS } from './config.js';
-import { showToast } from './ui.js';
 import { escapeHtml } from './utils.js';
-import { initCalendar } from './calendar.js';
 
 // ============================================================
 // СОСТОЯНИЕ
@@ -19,43 +17,78 @@ import { initCalendar } from './calendar.js';
 let currentStatTab = 'overview';
 
 // ============================================================
+// ИМЕНА ПАКЕТОВ (ЛОКАЛЬНАЯ КОПИЯ)
+// ============================================================
+
+const PACKAGE_NAMES = {
+    'core': 'Базовый',
+    'travel': '🌍 Путешествия',
+    'health': '💪 Спорт и здоровье',
+    'cooking': '🍳 Кулинария',
+    'nature': '🌿 Природа',
+    'creative': '🎨 Творчество',
+    'selfdev': '🧠 Саморазвитие',
+    'relationships': '💕 Отношения',
+    'fishing': '🎣 Рыбалка и охота',
+    'extreme': '⚡ Экстрим',
+    'challenges': '🎯 Челленджи'
+};
+
+function getPackageName(packageId) {
+    return PACKAGE_NAMES[packageId] || packageId;
+}
+
+// ============================================================
 // ПОЛУЧЕНИЕ ДАННЫХ О ПРОГРЕССЕ ОТКРЫТИЯ
 // ============================================================
 
 function getUnlockStats() {
     const userLevel = user.level || 1;
-    const totalTasks = TASKS_DB.length;
+    const tasks = Array.isArray(TASKS_DB) ? TASKS_DB : [];
+    const totalTasks = tasks.length;
+    
+    const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    const activeTasks = tasks.filter(t => {
+        const pkgId = t.packageId || 'core';
+        return activePackages.includes(pkgId);
+    });
     
     const levelStats = {};
     for (let lvl = 1; lvl <= 20; lvl++) {
-        const count = TASKS_DB.filter(function(t) { return (t.unlockLevel || 1) === lvl; }).length;
+        const count = activeTasks.filter(t => (t.unlockLevel || 1) === lvl).length;
         const unlocked = lvl <= userLevel;
-        const completed = TASKS_DB.filter(function(t) {
+        const completed = activeTasks.filter(t => {
             return (t.unlockLevel || 1) === lvl && 
-                user.purchasedTasks.includes(t.id) &&
-                user.completedTasks.some(function(ct) { return ct.originalTaskId === t.id; });
+                user.purchasedTasks?.includes(t.id) &&
+                user.completedTasks?.some(ct => ct.originalTaskId === t.id);
         }).length;
-        levelStats[lvl] = { count: count, unlocked: unlocked, completed: completed };
+        levelStats[lvl] = { count, unlocked, completed };
     }
     
     const nextLevel = userLevel + 1;
-    const nextLevelTasks = TASKS_DB.filter(function(t) { return (t.unlockLevel || 1) === nextLevel; });
+    const nextLevelTasks = activeTasks.filter(t => (t.unlockLevel || 1) === nextLevel);
     const nextLevelCount = nextLevelTasks.length;
-    const nextLevelPreview = nextLevelTasks.slice(0, 5).map(function(t) { return t.text; });
+    const nextLevelPreview = nextLevelTasks.slice(0, 5).map(t => t.text || '');
     
-    const availableTasks = TASKS_DB.filter(function(t) { return (t.unlockLevel || 1) <= userLevel; }).length;
-    const percent = Math.min(100, Math.round((availableTasks / totalTasks) * 100));
+    const availableTasks = activeTasks.filter(t => (t.unlockLevel || 1) <= userLevel).length;
+    const totalActiveTasks = activeTasks.length;
+    const percent = totalActiveTasks > 0 ? Math.min(100, Math.round((availableTasks / totalActiveTasks) * 100)) : 0;
     
     return {
         userLevel: userLevel,
-        totalTasks: totalTasks,
+        totalTasks: totalActiveTasks,
         availableTasks: availableTasks,
-        lockedTasks: totalTasks - availableTasks,
+        lockedTasks: totalActiveTasks - availableTasks,
         percent: percent,
         nextLevel: nextLevel,
         nextLevelCount: nextLevelCount,
         nextLevelPreview: nextLevelPreview,
-        levelStats: levelStats
+        levelStats: levelStats,
+        activePackages: activePackages
     };
 }
 
@@ -70,22 +103,38 @@ export function renderStatistics() {
         return;
     }
 
+    const tasks = Array.isArray(TASKS_DB) ? TASKS_DB : [];
+    
     const level = getCurrentLevel();
     const nextLevel = getNextLevel();
-    const totalTasks = TASKS_DB.length;
-    const completedTasks = user.stats.tasksCompleted;
-    const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    const activeTasks = tasks.filter(t => {
+        const pkgId = t.packageId || 'core';
+        return activePackages.includes(pkgId);
+    });
+    
+    const totalTasks = activeTasks.length;
+    const completedTasks = user.stats?.tasksCompleted || 0;
+    const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     const achievementsCount = getTotalAchievementsCount();
-    const coins = user.coins;
-    const streak = user.dailyStreak;
+    const coins = user.coins || 0;
+    const streak = user.dailyStreak || 0;
     const unlockStats = getUnlockStats();
 
-    const curPts = level.pointsNeeded || 0;
+    const curPts = level?.pointsNeeded || 0;
     const nextPts = nextLevel ? nextLevel.pointsNeeded : curPts + 500;
-    const progressPercent = Math.min(100, ((user.totalPoints - curPts) / (nextPts - curPts)) * 100);
+    const progressPercent = Math.min(100, ((user.totalPoints - curPts) / (nextPts - curPts)) * 100 || 0);
 
-    var html = `
+    const packageNames = activePackages.map(id => {
+        const pkg = getPackageInfo(id);
+        return pkg ? pkg.name : id;
+    });
+
+    let html = `
         <div class="statistics-container max-w-4xl mx-auto">
             
             <!-- ВЕРХНЯЯ КАРТОЧКА ПРОГРЕССА -->
@@ -95,14 +144,14 @@ export function renderStatistics() {
                         <div class="flex items-center gap-3">
                             <div class="text-5xl">${user.currentAvatar || '🏆'}</div>
                             <div>
-                                <div class="text-2xl font-bold text-gray-800 dark:text-gray-200">${level.title}</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">Уровень ${level.level}</div>
+                                <div class="text-2xl font-bold text-gray-800 dark:text-gray-200">${level?.title || 'Новичок'}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Уровень ${level?.level || 1}</div>
                             </div>
                         </div>
                         <div class="mt-3">
                             <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
                                 <span>⭐ Опыт</span>
-                                <span>${user.totalPoints} / ${nextPts} XP</span>
+                                <span>${user.totalPoints || 0} / ${nextPts} XP</span>
                             </div>
                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                                 <div class="h-full rounded-full transition-all duration-500" style="width: ${progressPercent}%; background: linear-gradient(90deg, #10b981, #3b82f6);"></div>
@@ -138,10 +187,17 @@ export function renderStatistics() {
                         <div class="h-full rounded-full transition-all duration-500" style="width: ${completionPercent}%; background: linear-gradient(90deg, #10b981, #059669);"></div>
                     </div>
                 </div>
+                
+                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">📦 Активные пакеты:</span>
+                    ${packageNames.length > 0 ? packageNames.map(name => 
+                        `<span class="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">${name}</span>`
+                    ).join('') : '<span class="text-xs text-gray-400">Нет активных пакетов</span>'}
+                </div>
             </div>
 
             <!-- ТАБЫ -->
-            <div class="flex gap-2 mb-5 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex flex-wrap gap-2 mb-5 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-sm border border-gray-200 dark:border-gray-700">
                 <button class="stat-tab flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${currentStatTab === 'overview' ? 'bg-green-600 text-white shadow-md' : 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}" data-tab="overview">
                     📊 Общая
                 </button>
@@ -178,7 +234,7 @@ export function renderStatistics() {
 
 function renderStatContent(unlockStats) {
     if (currentStatTab === 'overview') {
-        return renderOverview();
+        return renderOverview(unlockStats);
     } else if (currentStatTab === 'unlock') {
         return renderUnlockTab(unlockStats);
     } else if (currentStatTab === 'achievements') {
@@ -186,22 +242,39 @@ function renderStatContent(unlockStats) {
     } else if (currentStatTab === 'calendar') {
         return renderCalendar();
     }
-    return renderOverview();
+    return renderOverview(unlockStats);
 }
 
 // ============================================================
 // ВКЛАДКА «ОБЩАЯ СТАТИСТИКА»
 // ============================================================
 
-function renderOverview() {
-    var categoryStats = getCategoryStats();
-    var activePackages = getActivePackages();
-    var packageNames = activePackages.map(function(id) {
-        var pkg = getPackageInfo(id);
+function renderOverview(unlockStats) {
+    const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    const tasks = Array.isArray(TASKS_DB) ? TASKS_DB : [];
+    
+    const allCategoryStats = getCategoryStats();
+    
+    const activeCategories = new Set();
+    for (const task of tasks) {
+        const pkgId = task.packageId || 'core';
+        if (activePackages.includes(pkgId)) {
+            activeCategories.add(task.category);
+        }
+    }
+    
+    const categoryStats = allCategoryStats.filter(stat => activeCategories.has(stat.category));
+    
+    let packageNames = activePackages.map(function(id) {
+        let pkg = getPackageInfo(id);
         return pkg ? pkg.name : id;
     });
 
-    var packageHtml = '';
+    let packageHtml = '';
     if (activePackages.length > 0) {
         packageHtml = `
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -215,14 +288,47 @@ function renderOverview() {
         `;
     }
 
-    var html = `
+    const packageStats = getPackageStats();
+
+    let html = `
         <div class="space-y-4">
             ${packageHtml}
             
+            <!-- СТАТИСТИКА ПО ПАКЕТАМ -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">📊 Прогресс по сборникам</h3>
+                ${Object.keys(packageStats).length > 0 ? `
+                    <div class="space-y-3">
+                        ${Object.entries(packageStats).map(([pkgId, stats]) => {
+                            const pkgName = getPackageName(pkgId);
+                            const percent = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                            const color = pkgId === 'core' ? '#10b981' : '#3b82f6';
+                            return `
+                                <div>
+                                    <div class="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+                                        <span>📦 ${pkgName}</span>
+                                        <span>${stats.completed} / ${stats.total} (${percent}%)</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500" style="width: ${percent}%; background: ${color};"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                ` : `
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <div class="text-4xl mb-2">📭</div>
+                        <p>Нет данных по сборникам</p>
+                    </div>
+                `}
+            </div>
+            
+            <!-- ПРОГРЕСС ПО КАТЕГОРИЯМ -->
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
                 <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">📊 Прогресс по категориям</h3>
                 ${categoryStats.length > 0 ? `
-                    <div class="space-y-3">
+                    <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                         ${categoryStats.map(function(stat) {
                             return `
                                 <div>
@@ -240,38 +346,42 @@ function renderOverview() {
                 ` : `
                     <div class="text-center py-8 text-gray-500 dark:text-gray-400">
                         <div class="text-4xl mb-2">📭</div>
-                        <p>Нет данных по категориям</p>
+                        <p>Активируйте сборники, чтобы увидеть прогресс по категориям</p>
+                        <button onclick="window.switchTab('packages')" class="mt-4 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm transition">
+                            📦 Перейти к сборникам
+                        </button>
                     </div>
                 `}
             </div>
 
+            <!-- БЫСТРАЯ СТАТИСТИКА -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">${user.stats.tasksCompleted}</div>
+                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">${user.stats?.tasksCompleted || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">✅ Выполнено</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">${user.activeTasks.length}</div>
+                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">${user.activeTasks?.length || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">⏳ В процессе</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">${user.stats.tasksSurrendered || 0}</div>
+                    <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">${user.stats?.tasksSurrendered || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">🏳️ Сдано</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">${user.stats.urgentCompleted || 0}</div>
+                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">${user.stats?.urgentCompleted || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">⚡ Срочных</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-pink-600 dark:text-pink-400">${user.stats.photosAdded || 0}</div>
+                    <div class="text-2xl font-bold text-pink-600 dark:text-pink-400">${user.stats?.photosAdded || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">📸 Фото</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">${user.stats.locationsAdded || 0}</div>
+                    <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">${user.stats?.locationsAdded || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">📍 Меток</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-                    <div class="text-2xl font-bold text-teal-600 dark:text-teal-400">${user.stats.tasksRepurchased || 0}</div>
+                    <div class="text-2xl font-bold text-teal-600 dark:text-teal-400">${user.stats?.tasksRepurchased || 0}</div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">🔄 Повторов</div>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
@@ -290,29 +400,30 @@ function renderOverview() {
 // ============================================================
 
 function renderUnlockTab(unlockStats) {
-    var userLevel = unlockStats.userLevel;
-    var totalTasks = unlockStats.totalTasks;
-    var availableTasks = unlockStats.availableTasks;
-    var lockedTasks = unlockStats.lockedTasks;
-    var percent = unlockStats.percent;
-    var nextLevel = unlockStats.nextLevel;
-    var nextLevelCount = unlockStats.nextLevelCount;
-    var nextLevelPreview = unlockStats.nextLevelPreview;
-    var levelStats = unlockStats.levelStats;
+    let userLevel = unlockStats.userLevel;
+    let totalTasks = unlockStats.totalTasks;
+    let availableTasks = unlockStats.availableTasks;
+    let lockedTasks = unlockStats.lockedTasks;
+    let percent = unlockStats.percent;
+    let nextLevel = unlockStats.nextLevel;
+    let nextLevelCount = unlockStats.nextLevelCount;
+    let nextLevelPreview = unlockStats.nextLevelPreview;
+    let levelStats = unlockStats.levelStats;
+    let activePackages = unlockStats.activePackages || [];
 
-    var levelsHtml = '';
-    for (var lvl = 1; lvl <= 20; lvl++) {
-        var stats = levelStats[lvl] || { count: 0, unlocked: false, completed: 0 };
-        var isUnlocked = lvl <= userLevel;
-        var isCurrent = lvl === userLevel;
-        var isNext = lvl === userLevel + 1;
-        var count = stats.count || 0;
-        var completed = stats.completed || 0;
-        var progress = count > 0 ? Math.round((completed / count) * 100) : 0;
+    let levelsHtml = '';
+    for (let lvl = 1; lvl <= 20; lvl++) {
+        let stats = levelStats[lvl] || { count: 0, unlocked: false, completed: 0 };
+        let isUnlocked = lvl <= userLevel;
+        let isCurrent = lvl === userLevel;
+        let isNext = lvl === userLevel + 1;
+        let count = stats.count || 0;
+        let completed = stats.completed || 0;
+        let progress = count > 0 ? Math.round((completed / count) * 100) : 0;
         
-        var statusIcon = '⬜';
-        var statusColor = 'bg-gray-200 dark:bg-gray-700';
-        var textColor = 'text-gray-500 dark:text-gray-400';
+        let statusIcon = '⬜';
+        let statusColor = 'bg-gray-200 dark:bg-gray-700';
+        let textColor = 'text-gray-500 dark:text-gray-400';
         
         if (isUnlocked) {
             statusIcon = '✅';
@@ -324,14 +435,14 @@ function renderUnlockTab(unlockStats) {
             textColor = 'text-blue-700 dark:text-blue-300';
         }
         
-        var starsCount = Math.min(5, Math.round(progress / 20));
-        var stars = '';
-        for (var s = 0; s < 5; s++) {
+        let starsCount = Math.min(5, Math.round(progress / 20));
+        let stars = '';
+        for (let s = 0; s < 5; s++) {
             stars += s < starsCount ? '★' : '☆';
         }
         
-        var currentBadge = isCurrent ? '<span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">ТЕКУЩИЙ</span>' : '';
-        var nextBadge = isNext && !isUnlocked ? '<span class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full animate-pulse">СЛЕДУЮЩИЙ</span>' : '';
+        let currentBadge = isCurrent ? '<span class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">ТЕКУЩИЙ</span>' : '';
+        let nextBadge = isNext && !isUnlocked ? '<span class="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-full animate-pulse">СЛЕДУЮЩИЙ</span>' : '';
         
         levelsHtml += `
             <div class="flex items-center gap-3 p-2 rounded-xl ${statusColor} border ${isCurrent ? 'border-green-500 dark:border-green-400' : 'border-transparent'} transition-all">
@@ -352,10 +463,10 @@ function renderUnlockTab(unlockStats) {
         `;
     }
 
-    var nextLevelHtml = '';
+    let nextLevelHtml = '';
     if (nextLevelCount > 0) {
-        var previewHtml = nextLevelPreview.map(function(text) {
-            var shortText = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+        let previewHtml = nextLevelPreview.map(function(text) {
+            let shortText = text.substring(0, 30) + (text.length > 30 ? '...' : '');
             return '<span class="px-3 py-1.5 bg-white dark:bg-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 border border-blue-200 dark:border-blue-800">📌 ' + escapeHtml(shortText) + '</span>';
         }).join('');
         
@@ -388,7 +499,7 @@ function renderUnlockTab(unlockStats) {
         `;
     }
 
-    var html = `
+    let html = `
         <div class="space-y-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between items-center mb-2">
@@ -402,6 +513,9 @@ function renderUnlockTab(unlockStats) {
                     <span>Открыто: ${availableTasks}</span>
                     <span>Закрыто: ${lockedTasks}</span>
                     <span>Всего: ${totalTasks}</span>
+                </div>
+                <div class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+                    📦 Активные пакеты: ${activePackages.map(id => getPackageName(id)).join(', ')}
                 </div>
             </div>
             
@@ -422,13 +536,13 @@ function renderUnlockTab(unlockStats) {
 // ============================================================
 
 function renderAchievements() {
-    var completedAchievements = user.achievements || [];
-    var categoryAchievements = user.categoryAchievements || {};
-    var secretAchievements = (user.secretAchievements || []).filter(function(a) { return a.completed; });
+    let completedAchievements = user.achievements || [];
+    let categoryAchievements = user.categoryAchievements || {};
+    let secretAchievements = (user.secretAchievements || []).filter(function(a) { return a.completed; });
 
-    var total = completedAchievements.length + Object.keys(categoryAchievements).length + secretAchievements.length;
+    let total = completedAchievements.length + Object.keys(categoryAchievements).length + secretAchievements.length;
 
-    var html = `
+    let html = `
         <div class="space-y-4">
             <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700 text-center">
                 <div class="text-4xl font-bold text-green-600 dark:text-green-400">${total}</div>
@@ -450,23 +564,25 @@ function renderAchievements() {
     }
 
     if (Object.keys(categoryAchievements).length > 0) {
-        var categoryHtml = Object.entries(categoryAchievements).map(function(entry) {
-            var id = entry[0];
-            var level = entry[1];
-            var ach = CATEGORY_ACHIEVEMENTS.find(function(a) { return a.id === id; });
-            var levelNames = ['🥉 Бронза', '🥈 Серебро', '🥇 Золото', '💎 Платина'];
+        let categoryHtml = Object.entries(categoryAchievements).map(function(entry) {
+            let id = entry[0];
+            let level = entry[1];
+            let ach = CATEGORY_ACHIEVEMENTS.find(function(a) { return a.id === id; });
+            let levelNames = ['🥉 Бронза', '🥈 Серебро', '🥇 Золото', '💎 Платина'];
             if (ach) {
                 return '<span class="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm">' + ach.name + ' — ' + levelNames[level - 1] + '</span>';
             }
             return '';
         }).join('');
         
-        html += `
-            <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">📊 Категорийные достижения (${Object.keys(categoryAchievements).length})</h3>
-                <div class="flex flex-wrap gap-2">${categoryHtml}</div>
-            </div>
-        `;
+        if (categoryHtml) {
+            html += `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h3 class="font-bold text-gray-800 dark:text-gray-200 mb-3">📊 Категорийные достижения (${Object.keys(categoryAchievements).length})</h3>
+                    <div class="flex flex-wrap gap-2">${categoryHtml}</div>
+                </div>
+            `;
+        }
     }
 
     if (secretAchievements.length > 0) {
@@ -501,14 +617,26 @@ function renderAchievements() {
 // ============================================================
 
 function renderCalendar() {
-    setTimeout(function() {
-        var calendarGrid = document.getElementById('calendarGrid');
+    // Инициализация календаря через динамический импорт
+    setTimeout(async function() {
+        let calendarGrid = document.getElementById('calendarGrid');
         if (calendarGrid) {
-            import('./calendar.js').then(function(module) {
+            try {
+                const module = await import('./calendar.js');
                 if (typeof module.initCalendar === 'function') {
                     module.initCalendar();
                 }
-            });
+            } catch (e) {
+                console.warn('Calendar module not loaded:', e);
+                if (calendarGrid) {
+                    calendarGrid.innerHTML = `
+                        <div class="col-span-7 text-center py-8 text-gray-500">
+                            📅 Календарь загружается...
+                            <div class="mt-2 text-sm">Попробуйте обновить страницу</div>
+                        </div>
+                    `;
+                }
+            }
         }
     }, 50);
 
@@ -517,7 +645,11 @@ function renderCalendar() {
             <div class="text-center mb-4">
                 <div class="text-2xl font-bold" id="currentMonthYear"></div>
             </div>
-            <div class="calendar-grid grid grid-cols-7 gap-2" id="calendarGrid"></div>
+            <div class="calendar-grid grid grid-cols-7 gap-2" id="calendarGrid">
+                <div class="col-span-7 text-center py-8 text-gray-500">
+                    📅 Загрузка календаря...
+                </div>
+            </div>
             <div class="text-center mt-4 text-sm text-gray-500" id="superPrizeStatus"></div>
         </div>
     `;
@@ -528,50 +660,95 @@ function renderCalendar() {
 // ============================================================
 
 function getCategoryStats() {
-    var stats = {};
-    var purchased = new Set(user.purchasedTasks);
+    const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    const tasks = Array.isArray(TASKS_DB) ? TASKS_DB : [];
+    
+    const stats = {};
+    const purchased = new Set(user.purchasedTasks || []);
 
-    for (var i = 0; i < TASKS_DB.length; i++) {
-        var task = TASKS_DB[i];
+    for (const task of tasks) {
+        const pkgId = task.packageId || 'core';
+        if (!activePackages.includes(pkgId)) {
+            continue;
+        }
+        
         if (!stats[task.category]) {
             stats[task.category] = { total: 0, completed: 0 };
         }
         stats[task.category].total++;
+        
         if (purchased.has(task.id)) {
-            var completed = user.completedTasks.some(function(t) { return t.originalTaskId === task.id; });
+            const completed = user.completedTasks?.some(t => t.originalTaskId === task.id) || false;
             if (completed) {
                 stats[task.category].completed++;
             }
         }
     }
 
-    for (var j = 0; j < user.completedTasks.length; j++) {
-        var task2 = user.completedTasks[j];
-        if (!stats[task2.category]) {
-            stats[task2.category] = { total: 0, completed: 0 };
+    for (const task of user.completedTasks || []) {
+        const hasActiveCategory = Object.keys(stats).includes(task.category);
+        if (hasActiveCategory) {
+            if (!stats[task.category]) {
+                stats[task.category] = { total: 0, completed: 0 };
+            }
+            stats[task.category].completed = Math.max(stats[task.category].completed || 0, 
+                (user.completedTasks || []).filter(t => t.category === task.category).length);
         }
-        stats[task2.category].completed++;
     }
 
-    var colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
-    return Object.entries(stats).map(function(entry, index) {
-        var category = entry[0];
-        var data = entry[1];
-        return {
-            category: category,
-            total: data.total || 0,
-            completed: data.completed || 0,
-            percent: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
-            color: colors[index % colors.length]
-        };
-    }).sort(function(a, b) { return b.percent - a.percent; });
+    return Object.entries(stats).map(([category, data], index) => ({
+        category: category,
+        total: data.total || 0,
+        completed: data.completed || 0,
+        percent: data.total > 0 ? Math.round((data.completed / data.total) * 100) : 0,
+        color: colors[index % colors.length]
+    })).sort((a, b) => b.percent - a.percent);
+}
+
+function getPackageStats() {
+    const activePackages = getActivePackages();
+    if (!activePackages.includes('core')) {
+        activePackages.push('core');
+    }
+    
+    const tasks = Array.isArray(TASKS_DB) ? TASKS_DB : [];
+    
+    const stats = {};
+    const purchased = new Set(user.purchasedTasks || []);
+    
+    for (const task of tasks) {
+        const pkgId = task.packageId || 'core';
+        if (!activePackages.includes(pkgId)) {
+            continue;
+        }
+        
+        if (!stats[pkgId]) {
+            stats[pkgId] = { total: 0, completed: 0, purchased: 0 };
+        }
+        stats[pkgId].total++;
+        
+        if (purchased.has(task.id)) {
+            stats[pkgId].purchased++;
+            const completed = user.completedTasks?.some(t => t.originalTaskId === task.id) || false;
+            if (completed) {
+                stats[pkgId].completed++;
+            }
+        }
+    }
+    
+    return stats;
 }
 
 function getTotalAchievementsCount() {
-    var simple = user.achievements ? user.achievements.length : 0;
-    var category = Object.keys(user.categoryAchievements || {}).length;
-    var secret = (user.secretAchievements || []).filter(function(a) { return a.completed; }).length;
+    let simple = user.achievements ? user.achievements.length : 0;
+    let category = Object.keys(user.categoryAchievements || {}).length;
+    let secret = (user.secretAchievements || []).filter(function(a) { return a.completed; }).length;
     return simple + category + secret;
 }
 
@@ -589,3 +766,4 @@ document.addEventListener('pointsUpdated', refreshStatistics);
 document.addEventListener('levelUp', refreshStatistics);
 document.addEventListener('categoryAchievement', refreshStatistics);
 document.addEventListener('userReset', refreshStatistics);
+document.addEventListener('packagesUpdated', refreshStatistics);
